@@ -17,13 +17,19 @@ async function loadTargets(): Promise<string[] | undefined> {
   return undefined;
 }
 
-function formatFindings(findings: ReturnType<typeof analyze>) {
+function formatFindings(
+  findings: ReturnType<typeof analyze>,
+  targets?: string[] | undefined
+) {
   if (findings.length === 0) {
     console.log(pc.green("No issues found."));
     return 0;
   }
-  const nonBaseline = findings.filter((f) => f.baseline !== "yes");
-  console.log(pc.bold(`Baseline scan summary`));
+  const nonBaseline = findings.filter((f: any) => f.baseline !== "yes");
+  const header = targets?.length
+    ? `Baseline scan summary (targets: ${targets.join(", ")})`
+    : "Baseline scan summary";
+  console.log(pc.bold(header));
   for (const f of findings) {
     const status =
       f.baseline === "yes" ? pc.green("Baseline ✓") : pc.red("NOT Baseline");
@@ -32,14 +38,17 @@ function formatFindings(findings: ReturnType<typeof analyze>) {
     if (f.suggestion) console.log(`  • Suggest: ${f.suggestion}`);
     console.log(`  • Docs: ${f.docsUrl}`);
   }
+  console.log(
+    pc.bold(`\nTotals:`),
+    `${nonBaseline.length} non-Baseline, ${findings.length - nonBaseline.length} safe`
+  );
   return nonBaseline.length > 0 ? 1 : 0;
 }
 
 async function main() {
   const targetPath = process.argv[2] ?? ".";
-  const patterns = [
-    path.join(targetPath, "**/*.{js,jsx,ts,tsx,css,scss,html}"),
-  ];
+  const norm = targetPath.replace(/\\/g, "/");
+  const patterns = [`${norm}/**/*.{js,jsx,ts,tsx,css,scss,html}`];
   const files = await globby(patterns, { gitignore: true, dot: false });
   const fileRefs: FileRef[] = [];
   for (const p of files) {
@@ -48,7 +57,7 @@ async function main() {
   }
   const targets = await loadTargets();
   const findings = analyze(fileRefs, { targets });
-  const code = formatFindings(findings);
+  const code = formatFindings(findings, targets);
   process.exitCode = code;
 }
 

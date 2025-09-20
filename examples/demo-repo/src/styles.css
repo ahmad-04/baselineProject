@@ -1,0 +1,10 @@
+/* Demo CSS with modern features */
+.card:has(> img) {
+  border: 1px solid oklch(60% 0.18 240);
+}
+
+@container (width > 400px) {
+  .grid {
+    display: grid;
+  }
+}
