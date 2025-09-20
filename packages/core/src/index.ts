@@ -70,6 +70,31 @@ const JS_FEATURES = [
     suggestion:
       "Guard: if ('startViewTransition' in document) { ... } else { ... }",
   },
+  {
+    id: "navigator-share",
+    title: "Web Share API",
+    regex: /navigator\.share\s*\(/g,
+    docs: "https://developer.mozilla.org/docs/Web/API/Navigator/share",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Guard: if (navigator.share) { await navigator.share(...) } else { fallback }",
+  },
+  {
+    id: "file-system-access-picker",
+    title: "showOpenFilePicker()",
+    regex: /showOpenFilePicker\s*\(/g,
+    docs: "https://developer.mozilla.org/docs/Web/API/window/showOpenFilePicker",
+    baseline: "partial" as BaselineStatus,
+    suggestion: 'Fallback: use <input type="file"> when picker is unavailable.',
+  },
+  {
+    id: "url-canparse",
+    title: "URL.canParse()",
+    regex: /URL\.canParse\s*\(/g,
+    docs: "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
+    baseline: "partial" as BaselineStatus,
+    suggestion: "Fallback: try/catch new URL(...) for validation.",
+  },
 ];
 
 const CSS_FEATURES = [
@@ -98,6 +123,15 @@ const CSS_FEATURES = [
     baseline: "partial" as BaselineStatus,
     suggestion:
       "Provide responsive fallbacks using media queries when container queries are unsupported.",
+  },
+  {
+    id: "css-color-oklch",
+    title: "CSS oklch()/oklab() colors",
+    regex: /\boklch\s*\(|\boklab\s*\(/g,
+    docs: "https://developer.mozilla.org/docs/Web/CSS/color_value/oklch",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Provide fallback colors or color-mix() alternatives when unsupported.",
   },
 ];
 

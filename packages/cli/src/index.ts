@@ -6,8 +6,8 @@ import { globby } from "globby";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-async function loadTargets(): Promise<string[] | undefined> {
-  const pkg = await readPackageUp({ cwd: process.cwd() });
+async function loadTargets(cwd: string): Promise<string[] | undefined> {
+  const pkg = await readPackageUp({ cwd });
   const browserslist = (pkg?.packageJson as any)?.browserslist;
   if (!browserslist) return undefined;
   if (Array.isArray(browserslist)) return browserslist as string[];
@@ -78,7 +78,7 @@ async function main() {
     const content = await fs.readFile(p, "utf8");
     fileRefs.push({ path: p, content });
   }
-  const targets = await loadTargets();
+  const targets = await loadTargets(path.resolve(targetPath));
   const findings = analyze(fileRefs, { targets });
   const nonBaseline = findings.filter((f: any) => f.baseline !== "yes");
   const report = {
