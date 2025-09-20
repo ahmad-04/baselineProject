@@ -1,0 +1,16 @@
+# Node
+node_modules/
+dist/
+coverage/
+*.log
+*.tmp
+*.tsbuildinfo
+
+# Editor
+.vscode/
+.DS_Store
+.idea/
+
+# Builds
+packages/**/dist/
+examples/**/dist/

@@ -1,0 +1,17 @@
+name: "Baseline Guard"
+description: "Scan PR changes for non-Baseline features and comment"
+author: "baseline-tools"
+branding:
+  color: "blue"
+  icon: "check-circle"
+inputs:
+  github-token:
+    description: "GitHub token for commenting on PRs"
+    required: false
+  path:
+    description: "Path to scan"
+    required: false
+    default: "."
+runs:
+  using: "node20"
+  main: "dist/index.js"

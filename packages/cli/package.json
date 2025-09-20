@@ -1,0 +1,26 @@
+{
+  "name": "@baseline-tools/cli",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "baseline-scan": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc -p tsconfig.json",
+    "test": "node --test --watch=false",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@baseline-tools/core": "file:../core",
+    "globby": "^14.0.2",
+    "ignore": "^5.3.1",
+    "picocolors": "^1.0.0",
+    "read-pkg-up": "^11.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "rimraf": "^5.0.5"
+  }
+}

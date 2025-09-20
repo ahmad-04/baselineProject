@@ -1,0 +1,30 @@
+{
+  "name": "baseline-guardrails",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Baseline Guardrails monorepo: core engine, CLI scanner, GitHub Action",
+  "workspaces": [
+    "packages/*",
+    "examples/*"
+  ],
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "scripts": {
+    "build:core": "npm --prefix packages/core run build",
+    "build:cli": "npm --prefix packages/cli run build",
+    "build:action": "npm --prefix packages/action run build",
+    "build": "npm run build:core && npm run build:cli && npm run build:action",
+    "test": "npm --prefix packages/core run test && npm --prefix packages/cli run test && npm --prefix packages/action run test",
+    "format": "prettier --write .",
+    "lint": "eslint . --ext .ts,.tsx,.js",
+    "clean": "rimraf packages/**/dist packages/**/node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "eslint": "^9.9.0",
+    "prettier": "^3.3.3",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.5.4"
+  }
+}
