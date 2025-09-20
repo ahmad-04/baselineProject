@@ -62,7 +62,11 @@ function parseArgs(argv: string[]) {
       args.report = argv[++i];
     } else if (a === "--files") {
       const v = argv[++i];
-      if (v) args.files = v.split(",").map((s) => s.trim()).filter(Boolean);
+      if (v)
+        args.files = v
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
     } else if (!a.startsWith("-")) {
       rest.push(a);
     }
