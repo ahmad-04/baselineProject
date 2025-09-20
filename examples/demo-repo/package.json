@@ -2,10 +2,20 @@
   "name": "baseline-demo-repo",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "browserslist": [
     ">0.5% and not dead"
   ],
   "scripts": {
-    "scan": "baseline-scan src"
+    "build": "npm --prefix ../.. run build",
+    "scan": "node ../../packages/cli/dist/index.js src --exit-zero",
+    "scan:strict": "node ../../packages/cli/dist/index.js src",
+    "scan:json": "node ../../packages/cli/dist/index.js src --json --exit-zero",
+    "scan:report": "node ../../packages/cli/dist/index.js src --report baseline-report.json --exit-zero",
+    "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\""
+  },
+  "devDependencies": {
+    "eslint": "^9.9.0",
+    "@typescript-eslint/parser": "^8.0.0"
   }
 }

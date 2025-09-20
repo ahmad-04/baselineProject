@@ -1,0 +1,13 @@
+{
+  "root": false,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["baseline"],
+  "extends": ["plugin:baseline/recommended"],
+  "env": { "browser": true, "es2022": true },
+  "overrides": [
+    {
+      "files": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+      "parserOptions": { "sourceType": "module" }
+    }
+  ]
+}

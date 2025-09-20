@@ -9,7 +9,6 @@ function demo() {
     console.log("can parse URL", URL.canParse("https://example.com"));
   }
   if ((navigator as any).share) {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     navigator.share({ title: "Demo", url: location.href }).catch(() => {});
   }
 }
