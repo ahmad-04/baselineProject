@@ -71,7 +71,26 @@ async function run() {
     }
     for (const f of nonBaseline.slice(0, 20)) {
       lines.push(`\n- ${f.title} — ${f.file}:${f.line}`);
-      if (f.suggestion) lines.push(`  - Fix: ${f.suggestion}`);
+      if (f.suggestion) {
+        lines.push(`  - Fix: ${f.suggestion}`);
+        // add code block with a generic snippet based on featureId
+        let snippet = "";
+        if (f.featureId === "navigator-share") {
+          snippet = `if (navigator.share) {\n  await navigator.share({ title: document.title, url: location.href });\n} else {\n  // TODO: fallback\n}`;
+        } else if (f.featureId === "url-canparse") {
+          snippet = `function canParse(u){ try { new URL(u); return true; } catch { return false; } }`;
+        } else if (f.featureId === "view-transitions") {
+          snippet = `if ('startViewTransition' in document) {\n  // document.startViewTransition(() => { ... })\n} else {\n  // fallback\n}`;
+        } else if (f.featureId === "file-system-access-picker") {
+          snippet = `// Fallback: <input type=\"file\"> for older browsers\nconst input = document.createElement('input');\ninput.type = 'file';\ninput.click();`;
+        }
+        if (snippet) {
+          lines.push("  - Example:");
+          lines.push("    \n``````\n".replace(/`/g, "`")); // ensure fence
+          lines.push(snippet);
+          lines.push("``````");
+        }
+      }
       if (f.docsUrl) lines.push(`  - Docs: ${f.docsUrl}`);
     }
     if (nonBaseline.length > 20) {
