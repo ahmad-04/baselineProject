@@ -12,6 +12,8 @@ export interface Finding {
   docsUrl: string;
   dashboardUrl?: string;
   suggestion?: string;
+  guarded?: boolean;
+  advice?: "safe" | "needs-guard" | "guarded";
 }
 
 export interface AnalyzeOptions {
@@ -23,6 +25,8 @@ export interface FileRef {
   path: string;
   content: string;
 }
+
+import { getSupport } from "./targetSupport.js";
 
 const JS_FEATURES = [
   {
@@ -73,7 +77,7 @@ const JS_FEATURES = [
   {
     id: "navigator-share",
     title: "Web Share API",
-    regex: /navigator\.share\s*\(/g,
+    regex: /(navigator(?:\s+as\s+any)?|window\.navigator)\s*\.\s*share\s*\(/g,
     docs: "https://developer.mozilla.org/docs/Web/API/Navigator/share",
     baseline: "partial" as BaselineStatus,
     suggestion:
@@ -90,7 +94,7 @@ const JS_FEATURES = [
   {
     id: "url-canparse",
     title: "URL.canParse()",
-    regex: /URL\.canParse\s*\(/g,
+    regex: /URL(?:\s+as\s+any)?\.canParse\s*\(/g,
     docs: "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
     baseline: "partial" as BaselineStatus,
     suggestion: "Fallback: try/catch new URL(...) for validation.",
@@ -159,12 +163,48 @@ function pushMatches(
     suggestion?: string;
   }[]
 ) {
+  function isGuarded(featureId: string, index: number): boolean {
+    const start = Math.max(0, index - 800);
+    const before = content.slice(start, index);
+    // Find the last `if ... {` line before the usage (single-line heuristic)
+    const ifLineRe = /if[^\n{]*\{/g;
+    let lastLine: string | undefined;
+    let m: RegExpExecArray | null;
+    while ((m = ifLineRe.exec(before))) {
+      lastLine = m[0];
+    }
+    const condLine = lastLine || "";
+    if (featureId === "navigator-share") {
+      // Accept TS casts, optional chaining, and window.navigator forms inside the condition
+      // Examples: if ((navigator as any).share) { ... }
+      //           if (window.navigator?.share) { ... }
+      return /(navigator|window\.?navigator)[^\n{]*\.?\??\s*share\b/.test(
+        condLine
+      );
+    }
+    if (featureId === "url-canparse") {
+      // Examples: if ((URL as any).canParse) { ... }
+      return /\bURL[^\n{]*\.\s*canParse\b/.test(condLine);
+    }
+    if (featureId === "view-transitions") {
+      // if ('startViewTransition' in document)
+      return /startViewTransition[^\n{]*in[^\n{]*document/.test(condLine);
+    }
+    if (featureId === "file-system-access-picker") {
+      // Presence check: if (window.showOpenFilePicker) { ... }
+      return /showOpenFilePicker\b/.test(condLine);
+    }
+    return false;
+  }
   for (const it of items) {
     it.regex.lastIndex = 0;
     let m: RegExpExecArray | null;
     while ((m = it.regex.exec(content))) {
       const idx = m.index;
       const { line, column } = positionFromIndex(content, idx);
+      const guarded = isGuarded(it.id, idx);
+      const advice: "safe" | "needs-guard" | "guarded" =
+        it.baseline === "yes" ? "safe" : guarded ? "guarded" : "needs-guard";
       arr.push({
         file,
         line,
@@ -172,9 +212,11 @@ function pushMatches(
         featureId: it.id,
         title: it.title,
         baseline: it.baseline,
-        severity: it.baseline === "yes" ? "info" : "warn",
+        severity: it.baseline === "yes" ? "info" : guarded ? "info" : "warn",
         docsUrl: it.docs,
         suggestion: it.suggestion,
+        guarded,
+        advice,
       });
     }
   }
@@ -200,6 +242,7 @@ export function analyze(
   _options: AnalyzeOptions = {}
 ): Finding[] {
   const findings: Finding[] = [];
+  const targets = _options.targets;
   for (const f of files) {
     const lower = f.path.toLowerCase();
     if (
@@ -217,6 +260,20 @@ export function analyze(
       pushMatches(findings, f.content, f.path, CSS_FEATURES);
     } else if (lower.endsWith(".html") || lower.endsWith(".htm")) {
       pushMatches(findings, f.content, f.path, HTML_FEATURES);
+    }
+  }
+  // Enrich advice with basic target awareness (placeholder for full web-features integration)
+  if (targets && targets.length > 0) {
+    for (const f of findings) {
+      if (f.advice === "needs-guard" || f.advice === "guarded") {
+        const pct = getSupport(f.featureId, targets);
+        if (typeof pct === "number") {
+          const unsupported = Math.max(0, Math.round(100 - pct));
+          f.suggestion = f.suggestion
+            ? `${f.suggestion} (about ${unsupported}% of your targets may lack support)`
+            : `About ${unsupported}% of your targets may lack support.`;
+        }
+      }
     }
   }
   return findings;

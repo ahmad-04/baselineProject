@@ -1,6 +1,8 @@
 import type { Rule } from "eslint";
 import type { SourceCode } from "eslint";
 import { analyze, type FileRef } from "@baseline-tools/core";
+import fs from "node:fs";
+import path from "node:path";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -13,8 +15,7 @@ const rule: Rule.RuleModule = {
     schema: [],
     hasSuggestions: true,
     messages: {
-      nonBaseline:
-        "{{title}} may not be Baseline for your targets. See: {{docsUrl}}",
+      nonBaseline: "{{title}} — {{advice}}. See: {{docsUrl}}",
       suggestShareGuard:
         "Wrap navigator.share in a capability check with a fallback",
       suggestUrlParseFallback:
@@ -28,12 +29,41 @@ const rule: Rule.RuleModule = {
       Program() {
         const source: SourceCode = context.getSourceCode();
         const filePath = context.getFilename();
+        function loadTargetsFromNearestPackage(
+          start: string
+        ): string[] | undefined {
+          let dir = path.dirname(start);
+          const root = path.parse(dir).root;
+          while (true) {
+            const pkgPath = path.join(dir, "package.json");
+            try {
+              if (fs.existsSync(pkgPath)) {
+                const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+                const bl = pkg?.browserslist;
+                if (!bl) return undefined;
+                if (Array.isArray(bl)) return bl as string[];
+                if (typeof bl === "string") return [bl as string];
+                if (typeof bl === "object" && bl.production)
+                  return bl.production as string[];
+                return undefined;
+              }
+            } catch {
+              // ignore and continue up
+            }
+            if (dir === root) break;
+            const next = path.dirname(dir);
+            if (next === dir) break;
+            dir = next;
+          }
+          return undefined;
+        }
+        const targets = loadTargetsFromNearestPackage(filePath);
         const res = analyze(
           [{ path: filePath, content: source.text } satisfies FileRef],
-          {}
+          { targets }
         );
         for (const f of res) {
-          if (f.baseline !== "yes") {
+          if (f.baseline !== "yes" && !(f as any).guarded) {
             const loc = {
               start: { line: f.line, column: f.column - 1 },
               end: { line: f.line, column: f.column },
@@ -70,10 +100,23 @@ const rule: Rule.RuleModule = {
                 },
               });
             }
+            const adv = (f as any).advice as string | undefined;
+            const adviceLabel =
+              adv === "needs-guard"
+                ? "Needs guard"
+                : adv === "guarded"
+                  ? "Guarded"
+                  : adv === "safe"
+                    ? "Safe to adopt"
+                    : "Needs guard";
             context.report({
               loc,
               messageId: "nonBaseline",
-              data: { title: f.title, docsUrl: f.docsUrl },
+              data: {
+                title: f.title,
+                docsUrl: f.docsUrl,
+                advice: adviceLabel,
+              },
               suggest: suggestions,
             });
           }

@@ -8,6 +8,11 @@ async function run() {
   try {
     const token = core.getInput("github-token", { required: false });
     const scanPath = core.getInput("path") || ".";
+    const generateHtml =
+      (core.getInput("generate-html-report") || "true").toLowerCase() !==
+      "false";
+    const htmlReportPath =
+      core.getInput("report-html-path") || "baseline-report.html";
     core.info(`Preparing Baseline scan on: ${scanPath}`);
 
     // Compute changed files for PRs and filter to our target path and extensions
@@ -99,6 +104,13 @@ async function run() {
 
     core.summary.addHeading("Baseline Guard");
     core.summary.addRaw(lines.join("\n"));
+    if (generateHtml) {
+      const cmd = `node ./packages/cli/dist/index.js ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
+      core.info(`Generating HTML report: ${htmlReportPath}`);
+      await pexec(cmd);
+      core.setOutput("html-report", htmlReportPath);
+      core.summary.addRaw(`\n\nReport saved to: ${htmlReportPath}`);
+    }
     await core.summary.write();
 
     if (token) {

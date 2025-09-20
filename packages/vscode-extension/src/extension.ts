@@ -1,5 +1,7 @@
 import * as vscode from "vscode";
 import { analyze, type FileRef } from "@baseline-tools/core";
+import * as fs from "node:fs";
+import * as path from "node:path";
 
 const DIAG_COLLECTION = vscode.languages.createDiagnosticCollection("baseline");
 
@@ -30,20 +32,58 @@ function toRange(
   );
 }
 
+function loadTargetsFromWorkspace(
+  doc: vscode.TextDocument
+): string[] | undefined {
+  // Try nearest package.json from the file's directory upwards
+  let dir = path.dirname(doc.uri.fsPath);
+  const root = path.parse(dir).root;
+  while (true) {
+    const pkgPath = path.join(dir, "package.json");
+    try {
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+        const bl = pkg?.browserslist;
+        if (!bl) return undefined;
+        if (Array.isArray(bl)) return bl as string[];
+        if (typeof bl === "string") return [bl as string];
+        if (typeof bl === "object" && bl.production)
+          return bl.production as string[];
+        return undefined;
+      }
+    } catch {
+      // ignore
+    }
+    if (dir === root) break;
+    const next = path.dirname(dir);
+    if (next === dir) break;
+    dir = next;
+  }
+  return undefined;
+}
+
 function computeDiagnostics(doc: vscode.TextDocument) {
   const fileRef = fileToFileRef(doc);
   if (!fileRef) {
     DIAG_COLLECTION.delete(doc.uri);
     return;
   }
-  const findings = analyze([fileRef], {});
+  const targets = loadTargetsFromWorkspace(doc);
+  const findings = analyze([fileRef], { targets });
   const diags: vscode.Diagnostic[] = [];
   for (const f of findings) {
     if (f.baseline === "yes") continue;
+    if ((f as any).advice === "guarded") continue; // don't warn when already guarded
     const range = toRange(doc, f.line, f.column);
+    const msgAdvice =
+      (f as any).advice === "guarded"
+        ? "Guarded"
+        : (f as any).advice === "safe"
+          ? "Safe to adopt"
+          : "Needs guard";
     const diag = new vscode.Diagnostic(
       range,
-      `${f.title} may not be Baseline for your targets.`,
+      `${f.title} — ${msgAdvice}`,
       vscode.DiagnosticSeverity.Warning
     );
     diag.code = f.featureId;
@@ -73,6 +113,8 @@ class HoverProvider implements vscode.HoverProvider {
     lines.push(`Feature: ${d.message}`);
     if (d.suggestion) lines.push(`Suggestion: ${d.suggestion}`);
     if (d.docsUrl) lines.push(`Docs: ${d.docsUrl}`);
+    const targets = loadTargetsFromWorkspace(doc);
+    if (targets && targets.length) lines.push(`Targets: ${targets.join(", ")}`);
     return new vscode.Hover(lines.join("\n"));
   }
 }

@@ -30,3 +30,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: examples/demo-repo
+      - name: Upload HTML report (if generated)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-html-report
+          path: examples/demo-repo/baseline-report.html
