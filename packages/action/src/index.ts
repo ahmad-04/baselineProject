@@ -1,19 +1,40 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
+import { exec } from "node:child_process";
+import { promisify } from "node:util";
+const pexec = promisify(exec);
 
 async function run() {
   try {
     const token = core.getInput("github-token", { required: false });
-    const path = core.getInput("path") || ".";
+    const scanPath = core.getInput("path") || ".";
+    core.info(`Running baseline-scan on: ${scanPath}`);
 
-    // For MVP, call CLI and capture output using shell redirection within workflow step.
-    // A more robust approach would import the core analyzer and diff-only scan.
-    core.info(`Scanning path: ${path}`);
-    // Placeholder: rely on workflow to run CLI; just write to summary.
-    core.summary.addHeading("Baseline Guard — Summary");
-    core.summary.addRaw(
-      "Run baseline-scan in a previous step and attach output here."
+    const { stdout } = await pexec(
+      `node ./packages/cli/dist/index.js ${scanPath} --json --exit-zero`
     );
+    const report = JSON.parse(stdout);
+    const findings: any[] = report.findings || [];
+    const nonBaseline = findings.filter((f) => f.baseline !== "yes");
+
+    const lines: string[] = [];
+    lines.push(
+      `### Baseline Guard — ${nonBaseline.length} non-Baseline feature(s) detected`
+    );
+    if (report.meta?.targets) {
+      lines.push(`Targets: ${(report.meta.targets as string[]).join(", ")}`);
+    }
+    for (const f of nonBaseline.slice(0, 20)) {
+      lines.push(`\n- ${f.title} — ${f.file}:${f.line}`);
+      if (f.suggestion) lines.push(`  - Fix: ${f.suggestion}`);
+      if (f.docsUrl) lines.push(`  - Docs: ${f.docsUrl}`);
+    }
+    if (nonBaseline.length > 20) {
+      lines.push(`\n…and ${nonBaseline.length - 20} more.`);
+    }
+
+    core.summary.addHeading("Baseline Guard");
+    core.summary.addRaw(lines.join("\n"));
     await core.summary.write();
 
     if (token) {
@@ -24,7 +45,7 @@ async function run() {
           owner: ctx.repo.owner,
           repo: ctx.repo.repo,
           issue_number: ctx.payload.pull_request.number,
-          body: "Baseline Guard ran. See job summary for details.",
+          body: lines.join("\n"),
         });
       }
     }

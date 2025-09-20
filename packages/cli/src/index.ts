@@ -45,8 +45,31 @@ function formatFindings(
   return nonBaseline.length > 0 ? 1 : 0;
 }
 
+function parseArgs(argv: string[]) {
+  const args = {
+    path: ".",
+    json: false,
+    report: undefined as string | undefined,
+    exitZero: false,
+  };
+  const rest: string[] = [];
+  for (let i = 2; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--json") args.json = true;
+    else if (a === "--exit-zero") args.exitZero = true;
+    else if (a === "--report") {
+      args.report = argv[++i];
+    } else if (!a.startsWith("-")) {
+      rest.push(a);
+    }
+  }
+  if (rest[0]) args.path = rest[0];
+  return args;
+}
+
 async function main() {
-  const targetPath = process.argv[2] ?? ".";
+  const argv = parseArgs(process.argv);
+  const targetPath = argv.path ?? ".";
   const norm = targetPath.replace(/\\/g, "/");
   const patterns = [`${norm}/**/*.{js,jsx,ts,tsx,css,scss,html}`];
   const files = await globby(patterns, { gitignore: true, dot: false });
@@ -57,8 +80,30 @@ async function main() {
   }
   const targets = await loadTargets();
   const findings = analyze(fileRefs, { targets });
+  const nonBaseline = findings.filter((f: any) => f.baseline !== "yes");
+  const report = {
+    meta: {
+      targets: targets ?? null,
+      filesScanned: files.length,
+      generatedAt: new Date().toISOString(),
+    },
+    totals: {
+      total: findings.length,
+      nonBaseline: nonBaseline.length,
+      safe: findings.length - nonBaseline.length,
+    },
+    findings,
+  };
+  if (argv.report) {
+    await fs.writeFile(argv.report, JSON.stringify(report, null, 2), "utf8");
+  }
+  if (argv.json) {
+    console.log(JSON.stringify(report, null, 2));
+    process.exitCode = argv.exitZero ? 0 : nonBaseline.length > 0 ? 1 : 0;
+    return;
+  }
   const code = formatFindings(findings, targets);
-  process.exitCode = code;
+  process.exitCode = argv.exitZero ? 0 : code;
 }
 
 main().catch((err) => {
