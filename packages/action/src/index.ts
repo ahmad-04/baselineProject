@@ -8,10 +8,55 @@ async function run() {
   try {
     const token = core.getInput("github-token", { required: false });
     const scanPath = core.getInput("path") || ".";
-    core.info(`Running baseline-scan on: ${scanPath}`);
+    core.info(`Preparing Baseline scan on: ${scanPath}`);
+
+    // Compute changed files for PRs and filter to our target path and extensions
+    const ctx = github.context;
+    let filesArg = "";
+    const allowed = [
+      ".js",
+      ".ts",
+      ".jsx",
+      ".tsx",
+      ".css",
+      ".scss",
+      ".sass",
+      ".html",
+      ".htm",
+    ];
+    if (token && ctx.payload.pull_request) {
+      const octokit = github.getOctokit(token);
+      const { owner, repo } = ctx.repo;
+      const prNumber = ctx.payload.pull_request.number;
+      const changed: string[] = [];
+      let page = 1;
+      while (true) {
+        const { data } = await octokit.rest.pulls.listFiles({
+          owner,
+          repo,
+          pull_number: prNumber,
+          per_page: 100,
+          page,
+        });
+        if (!data.length) break;
+        for (const f of data) changed.push(f.filename);
+        if (data.length < 100) break;
+        page++;
+      }
+      const filtered = changed
+        .filter((p) => p.startsWith(scanPath.replace(/\\/g, "/")))
+        .filter((p) => allowed.some((ext) => p.endsWith(ext)));
+      if (filtered.length > 0) {
+        // comma-separated list; quote is added around whole string in command
+        filesArg = ` --files "${filtered.join(",")}"`;
+        core.info(`Diff-only mode with ${filtered.length} file(s).`);
+      } else {
+        core.info("No relevant changed files detected; scanning full path.");
+      }
+    }
 
     const { stdout } = await pexec(
-      `node ./packages/cli/dist/index.js ${scanPath} --json --exit-zero`
+      `node ./packages/cli/dist/index.js ${scanPath} --json --exit-zero${filesArg}`
     );
     const report = JSON.parse(stdout);
     const findings: any[] = report.findings || [];
