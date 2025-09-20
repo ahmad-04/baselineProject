@@ -1,0 +1,32 @@
+name: Baseline Guard
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci || npm i
+      - name: Build packages
+        run: npm run build
+      - name: Baseline scan (JSON artifact)
+        run: node packages/cli/dist/index.js examples/demo-repo --json --report baseline-report.json --exit-zero
+      - name: Upload report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-report
+          path: baseline-report.json
+      - name: Baseline Guard comment
+        uses: ./packages/action
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: examples/demo-repo

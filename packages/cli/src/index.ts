@@ -51,6 +51,7 @@ function parseArgs(argv: string[]) {
     json: false,
     report: undefined as string | undefined,
     exitZero: false,
+    files: undefined as string[] | undefined,
   };
   const rest: string[] = [];
   for (let i = 2; i < argv.length; i++) {
@@ -59,6 +60,9 @@ function parseArgs(argv: string[]) {
     else if (a === "--exit-zero") args.exitZero = true;
     else if (a === "--report") {
       args.report = argv[++i];
+    } else if (a === "--files") {
+      const v = argv[++i];
+      if (v) args.files = v.split(",").map((s) => s.trim()).filter(Boolean);
     } else if (!a.startsWith("-")) {
       rest.push(a);
     }
@@ -71,8 +75,17 @@ async function main() {
   const argv = parseArgs(process.argv);
   const targetPath = argv.path ?? ".";
   const norm = targetPath.replace(/\\/g, "/");
-  const patterns = [`${norm}/**/*.{js,jsx,ts,tsx,css,scss,html}`];
-  const files = await globby(patterns, { gitignore: true, dot: false });
+  let files: string[];
+  if (argv.files && argv.files.length > 0) {
+    files = await globby(argv.files, {
+      gitignore: true,
+      dot: false,
+      expandDirectories: false,
+    });
+  } else {
+    const patterns = [`${norm}/**/*.{js,jsx,ts,tsx,css,scss,html}`];
+    files = await globby(patterns, { gitignore: true, dot: false });
+  }
   const fileRefs: FileRef[] = [];
   for (const p of files) {
     const content = await fs.readFile(p, "utf8");
