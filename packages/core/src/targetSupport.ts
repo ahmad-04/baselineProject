@@ -13,6 +13,9 @@ const MAP: Record<string, string> = {
   "css-has": "css-has",
   "css-container-queries": "css-container-queries",
   "css-color-oklch": "css-oklab",
+  "css-nesting": "css-nesting",
+  "view-transitions": "view-transitions",
+  urlpattern: "urlpattern",
 };
 
 function agentsFromTargets(targets: string[]) {
@@ -21,6 +24,47 @@ function agentsFromTargets(targets: string[]) {
     const [name, version] = e.split(" ");
     return { name, version } as const;
   });
+}
+
+function normalizeVersion(v: string): number | undefined {
+  // browserslist version can be like "15.5", "15.5-15.6", "TP"
+  const m = v.match(/\d+(?:\.\d+)?/);
+  if (!m) return undefined;
+  return parseFloat(m[0]);
+}
+
+function resolveStat(agentStats: Record<string, any>, version: string) {
+  // Try direct match first
+  if (agentStats[version]) return agentStats[version];
+  const vNum = normalizeVersion(version);
+  if (vNum === undefined) return undefined;
+  let candidate: { key: string; val: any; keyNum: number } | undefined;
+  for (const key of Object.keys(agentStats)) {
+    const val = agentStats[key];
+    // Range like "15.5-15.6"
+    const range = key.match(/^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/);
+    if (range) {
+      const lo = parseFloat(range[1]);
+      const hi = parseFloat(range[2]);
+      if (vNum >= lo && vNum <= hi) return val;
+      continue;
+    }
+    // Less-than-or-equal like "≤37"
+    const le = key.match(/^≤\s*(\d+(?:\.\d+)?)/);
+    if (le) {
+      const hi = parseFloat(le[1]);
+      if (vNum <= hi) return val;
+      continue;
+    }
+    const kNum = normalizeVersion(key);
+    if (typeof kNum === "number") {
+      // Track greatest version <= target as fallback
+      if (kNum <= vNum && (!candidate || kNum > candidate.keyNum)) {
+        candidate = { key, val, keyNum: kNum };
+      }
+    }
+  }
+  return candidate?.val;
 }
 
 export function getSupport(
@@ -40,7 +84,7 @@ export function getSupport(
   for (const a of agents) {
     const agentStats = stats[a.name as keyof typeof stats];
     if (!agentStats) continue;
-    const ver = agentStats[a.version as keyof typeof agentStats];
+    const ver = resolveStat(agentStats as any, a.version);
     if (!ver) continue;
     total++;
     if (typeof ver === "string" && (ver.includes("y") || ver.includes("a")))
