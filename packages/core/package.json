@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npx tsc -p tsconfig.json",
-    "test": "node --test --watch=false",
+    "test": "node --test test/**/*.js",
     "clean": "rimraf dist"
   },
   "dependencies": {

@@ -366,13 +366,18 @@ async function main() {
       gitignore: true,
       dot: false,
       expandDirectories: false,
+      absolute: true,
     });
   } else {
-    const patterns = [`${norm}/**/*.{js,jsx,ts,tsx,css,scss,html}`];
-    const ignore = (cfg?.ignore || []).map((p) =>
-      path.posix.join(norm, p.replace(/\\/g, "/"))
-    );
-    files = await globby(patterns, { gitignore: true, dot: false, ignore });
+    const patterns = [`**/*.{js,jsx,ts,tsx,css,scss,html}`];
+    const ignore = (cfg?.ignore || []).map((p) => p.replace(/\\/g, "/"));
+    files = await globby(patterns, {
+      cwd: path.resolve(targetPath),
+      gitignore: true,
+      dot: false,
+      ignore,
+      absolute: true,
+    });
   }
   const fileRefs: FileRef[] = [];
   for (const p of files) {

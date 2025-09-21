@@ -29,6 +29,31 @@ const rule: Rule.RuleModule = {
       Program() {
         const source: SourceCode = context.getSourceCode();
         const filePath = context.getFilename();
+        type BaselineConfig = {
+          targets?: string[] | string;
+          unsupportedThreshold?: number;
+          features?: Record<string, boolean>;
+        };
+        function loadConfig(start: string): BaselineConfig | undefined {
+          let dir = path.dirname(start);
+          const root = path.parse(dir).root;
+          while (true) {
+            const p = path.join(dir, "baseline.config.json");
+            try {
+              if (fs.existsSync(p)) {
+                const txt = fs.readFileSync(p, "utf8");
+                return JSON.parse(txt) as BaselineConfig;
+              }
+            } catch {
+              // ignore
+            }
+            if (dir === root) break;
+            const next = path.dirname(dir);
+            if (next === dir) break;
+            dir = next;
+          }
+          return undefined;
+        }
         function loadTargetsFromNearestPackage(
           start: string
         ): string[] | undefined {
@@ -57,13 +82,33 @@ const rule: Rule.RuleModule = {
           }
           return undefined;
         }
-        const targets = loadTargetsFromNearestPackage(filePath);
+        const cfg = loadConfig(filePath);
+        const cfgTargets = Array.isArray(cfg?.targets)
+          ? (cfg?.targets as string[])
+          : typeof cfg?.targets === "string"
+            ? [cfg?.targets as string]
+            : undefined;
+        const targets = cfgTargets ?? loadTargetsFromNearestPackage(filePath);
         const res = analyze(
           [{ path: filePath, content: source.text } satisfies FileRef],
           { targets }
         );
         for (const f of res) {
+          if (cfg?.features && cfg.features[f.featureId] === false) continue;
           if (f.baseline !== "yes" && !(f as any).guarded) {
+            // Apply unsupported-threshold to soften advice
+            const threshold = cfg?.unsupportedThreshold;
+            const advice = ((): string => {
+              const a = (f as any).advice as string | undefined;
+              if (
+                typeof threshold === "number" &&
+                a === "needs-guard" &&
+                typeof (f as any).unsupportedPercent === "number" &&
+                (f as any).unsupportedPercent <= threshold
+              )
+                return "safe";
+              return a || "needs-guard";
+            })();
             const loc = {
               start: { line: f.line, column: f.column - 1 },
               end: { line: f.line, column: f.column },
@@ -100,7 +145,7 @@ const rule: Rule.RuleModule = {
                 },
               });
             }
-            const adv = (f as any).advice as string | undefined;
+            const adv = advice as string | undefined;
             const adviceLabel =
               adv === "needs-guard"
                 ? "Needs guard"

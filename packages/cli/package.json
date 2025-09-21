@@ -9,7 +9,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npx tsc -p tsconfig.json",
-    "test": "node --test --watch=false",
+    "test": "node --test",
     "clean": "rimraf dist"
   },
   "dependencies": {

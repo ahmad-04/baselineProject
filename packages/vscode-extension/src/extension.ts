@@ -35,6 +35,11 @@ function toRange(
 function loadTargetsFromWorkspace(
   doc: vscode.TextDocument
 ): string[] | undefined {
+  const cfg = loadConfig(doc);
+  if (cfg?.targets) {
+    if (Array.isArray(cfg.targets)) return cfg.targets as string[];
+    if (typeof cfg.targets === "string") return [cfg.targets as string];
+  }
   // Try nearest package.json from the file's directory upwards
   let dir = path.dirname(doc.uri.fsPath);
   const root = path.parse(dir).root;
@@ -62,23 +67,64 @@ function loadTargetsFromWorkspace(
   return undefined;
 }
 
+type BaselineConfig = {
+  targets?: string[] | string;
+  unsupportedThreshold?: number;
+  features?: Record<string, boolean>;
+};
+
+function loadConfig(doc: vscode.TextDocument): BaselineConfig | undefined {
+  let dir = path.dirname(doc.uri.fsPath);
+  const root = path.parse(dir).root;
+  while (true) {
+    const p = path.join(dir, "baseline.config.json");
+    try {
+      if (fs.existsSync(p)) {
+        const txt = fs.readFileSync(p, "utf8");
+        return JSON.parse(txt) as BaselineConfig;
+      }
+    } catch {
+      // ignore
+    }
+    if (dir === root) break;
+    const next = path.dirname(dir);
+    if (next === dir) break;
+    dir = next;
+  }
+  return undefined;
+}
+
 function computeDiagnostics(doc: vscode.TextDocument) {
   const fileRef = fileToFileRef(doc);
   if (!fileRef) {
     DIAG_COLLECTION.delete(doc.uri);
     return;
   }
+  const cfg = loadConfig(doc);
   const targets = loadTargetsFromWorkspace(doc);
   const findings = analyze([fileRef], { targets });
   const diags: vscode.Diagnostic[] = [];
   for (const f of findings) {
+    if (cfg?.features && cfg.features[f.featureId] === false) continue;
     if (f.baseline === "yes") continue;
     if ((f as any).advice === "guarded") continue; // don't warn when already guarded
+    const threshold = cfg?.unsupportedThreshold;
+    const effAdvice = (() => {
+      const a = (f as any).advice as string | undefined;
+      if (
+        typeof threshold === "number" &&
+        a === "needs-guard" &&
+        typeof (f as any).unsupportedPercent === "number" &&
+        (f as any).unsupportedPercent <= threshold
+      )
+        return "safe";
+      return a || "needs-guard";
+    })();
     const range = toRange(doc, f.line, f.column);
     const msgAdvice =
-      (f as any).advice === "guarded"
+      effAdvice === "guarded"
         ? "Guarded"
-        : (f as any).advice === "safe"
+        : effAdvice === "safe"
           ? "Safe to adopt"
           : "Needs guard";
     const diag = new vscode.Diagnostic(

@@ -18,7 +18,7 @@
     "build:eslint": "npm --prefix packages/eslint-plugin-baseline run build",
     "build:vscode": "npm --prefix packages/vscode-extension run build",
     "build": "npm run build:core && npm run build:helpers && npm run build:cli && npm run build:action && npm run build:eslint && npm run build:vscode",
-    "test": "npm --prefix packages/core run test && npm --prefix packages/cli run test && npm --prefix packages/action run test && npm --prefix packages/eslint-plugin-baseline run test",
+    "test": "npm run build && npm --prefix packages/core run test && npm --prefix packages/cli run test && npm --prefix packages/action run test && npm --prefix packages/eslint-plugin-baseline run test",
     "format": "prettier --write .",
     "lint": "eslint . --ext .ts,.tsx,.js",
     "clean": "rimraf packages/**/dist packages/**/node_modules"

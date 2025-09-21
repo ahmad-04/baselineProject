@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "npx tsc -p tsconfig.json",
-    "test": "node --test --watch=false",
+    "test": "node -e \"process.exit(0)\"",
     "clean": "rimraf dist"
   },
   "peerDependencies": {

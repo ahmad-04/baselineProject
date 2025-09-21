@@ -162,7 +162,7 @@ Workflow snippet:
 
 ## Configuration
 
-Create a `baseline.config.json` at the repo root (or pass with `--config`). The CLI will also look up from the scan path.
+Create a `baseline.config.json` at the repo root (or pass with `--config`). All tools (CLI, ESLint rule, VS Code extension) look up from the current file/scan path and honor these settings.
 
 ```json
 {
@@ -178,10 +178,10 @@ Create a `baseline.config.json` at the repo root (or pass with `--config`). The 
 
 Notes:
 
-- `targets`: overrides `browserslist` for scans.
-- `unsupportedThreshold`: reclassifies "needs-guard" to "safe" when unsupported% ≤ threshold.
-- `ignore`: additional glob patterns to skip.
-- `features`: per-feature toggles; set to `false` to hide a feature from reports.
+- `targets`: overrides `browserslist` targets.
+- `unsupportedThreshold`: reclassifies "needs-guard" to "safe" when unsupported% ≤ threshold (affects CLI totals, ESLint messaging, and VS Code diagnostics labels).
+- `ignore`: additional glob patterns to skip (CLI only).
+- `features`: per-feature toggles; set to `false` to hide/suppress a detector across tools.
 
 ## Code Scanning (SARIF)
 
