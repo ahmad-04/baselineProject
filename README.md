@@ -7,6 +7,7 @@ Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Co
 - ESLint: `eslint-plugin-baseline` — rule `baseline/no-nonbaseline` with suggestions, guard‑aware suppression.
 - VS Code: `baseline-guardrails-vscode` — diagnostics, hover, quick fixes, “Scan workspace” command.
 - Action: `@baseline-tools/action` — PR bot summary with code snippets; optional HTML report artifact.
+- SARIF: CLI can emit SARIF 2.1.0 for GitHub Code Scanning.
 
 ## Features
 
@@ -14,6 +15,9 @@ Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Co
 - Target-aware hints: Reads `browserslist` and shows “about X% may lack support” (approximate via caniuse-lite).
 - Guard-aware suppression: ESLint rule and VS Code diagnostics skip issues already wrapped in capability checks.
 - HTML Adoption Report: Shareable report with targets, totals, advice, suggestions, and docs links.
+- SARIF Output: Use in security/code scanning dashboards.
+- Helpers: Drop-in capability checks to make guards trivial to add.
+- Config: `baseline.config.json` to centralize targets, thresholds, ignores, and feature toggles.
 
 ## Quick Start
 
@@ -40,6 +44,12 @@ node packages/cli/dist/index.js examples/demo-repo --json --report baseline-repo
 node packages/cli/dist/index.js examples/demo-repo --report baseline-report.html --exit-zero
 ```
 
+4. SARIF report (for GitHub Code Scanning)
+
+```bash
+node packages/cli/dist/index.js examples/demo-repo --report baseline-report.sarif --exit-zero
+```
+
 4. GitHub Action (already wired)
 
 The workflow `.github/workflows/baseline.yml` builds, scans, uploads a JSON artifact, posts a PR comment, and uploads the HTML report.
@@ -47,13 +57,15 @@ The workflow `.github/workflows/baseline.yml` builds, scans, uploads a JSON arti
 ## CLI Usage
 
 ```bash
-baseline-scan <path> [--json] [--report <file>] [--exit-zero] [--files <csv>]
+baseline-scan <path> [--json] [--report <file>] [--exit-zero] [--files <csv>] [--unsupported-threshold <n>] [--config <path>]
 ```
 
 - `--json`: print JSON report to stdout
-- `--report <file>`: write JSON when `<file>` is `.json` or HTML when `.html`
+- `--report <file>`: write JSON when `<file>` is `.json`, HTML when `.html`, SARIF when `.sarif`
 - `--exit-zero`: never fail the process (useful for CI summaries)
 - `--files <csv>`: only scan the provided files/globs (used for PR diffs)
+- `--unsupported-threshold <n>`: treat “needs-guard” as “safe” when unsupported percentage is `<= n`
+- `--config <path>`: path to `baseline.config.json` to override defaults
 
 Notes:
 
@@ -94,6 +106,29 @@ Capabilities:
 
 Run from this repo: use the provided launch config “Run Extension (baseline-guardrails)” and press F5.
 
+## Helpers
+
+Package: `@baseline-tools/helpers`
+
+- `canShare()`: checks `navigator.share` availability
+- `canParseUrl(url)`: uses `URL.canParse` when available, falls back to `new URL()`
+- `hasViewTransitions()`: checks `document.startViewTransition`
+- `canShowOpenFilePicker()`: checks `window.showOpenFilePicker`
+
+Example:
+
+```ts
+import { canShare } from "@baseline-tools/helpers";
+
+async function sharePage() {
+  if (canShare()) {
+    await navigator.share({ title: document.title, url: location.href });
+  } else {
+    // fallback UI
+  }
+}
+```
+
 ## GitHub Action
 
 Local action `packages/action` posts a PR summary and, by default, generates an HTML report.
@@ -125,6 +160,42 @@ Workflow snippet:
 		path: examples/demo-repo/baseline-report.html
 ```
 
+## Configuration
+
+Create a `baseline.config.json` at the repo root (or pass with `--config`). The CLI will also look up from the scan path.
+
+```json
+{
+  "targets": ">0.5% and not dead",
+  "unsupportedThreshold": 5,
+  "ignore": ["**/dist/**", "**/node_modules/**"],
+  "features": {
+    "urlpattern": true,
+    "css-has": true
+  }
+}
+```
+
+Notes:
+
+- `targets`: overrides `browserslist` for scans.
+- `unsupportedThreshold`: reclassifies "needs-guard" to "safe" when unsupported% ≤ threshold.
+- `ignore`: additional glob patterns to skip.
+- `features`: per-feature toggles; set to `false` to hide a feature from reports.
+
+## Code Scanning (SARIF)
+
+Generate SARIF with the CLI and upload to GitHub Code Scanning:
+
+```yaml
+- name: Generate SARIF
+  run: node packages/cli/dist/index.js examples/demo-repo --report baseline-report.sarif --exit-zero
+- name: Upload SARIF to Code Scanning
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: baseline-report.sarif
+```
+
 ## Demo Repo
 
 The `examples/demo-repo` includes code that triggers findings (JS/CSS/HTML). Helpful scripts:
@@ -142,6 +213,9 @@ npm run scan:json
 # Write JSON or HTML report
 npm run scan:report
 node ../../packages/cli/dist/index.js src --report baseline-report.html --exit-zero
+
+# Write SARIF report
+node ../../packages/cli/dist/index.js src --report baseline-report.sarif --exit-zero
 ```
 
 On Windows, open the HTML report with:
@@ -149,6 +223,10 @@ On Windows, open the HTML report with:
 ```bash
 explorer.exe C:\\Github_projects\\baselineProject\\examples\\demo-repo\\baseline-report.html
 ```
+
+## Recipes
+
+Practical guard/fallback examples are in `docs/recipes/`.
 
 ## Notes & Limitations
 

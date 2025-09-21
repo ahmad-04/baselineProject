@@ -17,6 +17,44 @@ async function loadTargets(cwd: string): Promise<string[] | undefined> {
   return undefined;
 }
 
+type BaselineConfig = {
+  targets?: string[] | string;
+  unsupportedThreshold?: number;
+  ignore?: string[];
+  features?: Record<string, boolean>;
+};
+
+async function loadConfig(
+  startDir: string,
+  explicitPath?: string
+): Promise<{ path?: string; config?: BaselineConfig }> {
+  try {
+    if (explicitPath) {
+      const p = path.resolve(explicitPath);
+      const txt = await fs.readFile(p, "utf8");
+      return { path: p, config: JSON.parse(txt) as BaselineConfig };
+    }
+    let dir = path.resolve(startDir);
+    const root = path.parse(dir).root;
+    while (true) {
+      const p = path.join(dir, "baseline.config.json");
+      try {
+        const txt = await fs.readFile(p, "utf8");
+        return { path: p, config: JSON.parse(txt) as BaselineConfig };
+      } catch {
+        // keep walking up
+      }
+      if (dir === root) break;
+      const next = path.dirname(dir);
+      if (next === dir) break;
+      dir = next;
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
 function formatFindings(
   findings: ReturnType<typeof analyze>,
   targets?: string[] | undefined
@@ -64,6 +102,8 @@ function parseArgs(argv: string[]) {
     report: undefined as string | undefined,
     exitZero: false,
     files: undefined as string[] | undefined,
+    unsupportedThreshold: undefined as number | undefined,
+    configPath: undefined as string | undefined,
   };
   const rest: string[] = [];
   for (let i = 2; i < argv.length; i++) {
@@ -79,6 +119,12 @@ function parseArgs(argv: string[]) {
           .split(",")
           .map((s) => s.trim())
           .filter(Boolean);
+    } else if (a === "--unsupported-threshold") {
+      const v = argv[++i];
+      const n = v ? Number(v) : NaN;
+      if (!Number.isNaN(n)) args.unsupportedThreshold = n;
+    } else if (a === "--config") {
+      args.configPath = argv[++i];
     } else if (!a.startsWith("-")) {
       rest.push(a);
     }
@@ -108,10 +154,19 @@ function renderHtmlReport(report: any): string {
             ? "Safe to adopt"
             : "Needs guard"
       ) as string;
-      return `<tr>
+      return `<tr data-advice="${escapeHtml(f.advice || "")}" data-unsupported="${
+        typeof f.unsupportedPercent === "number"
+          ? String(f.unsupportedPercent)
+          : ""
+      }" data-feature="${escapeHtml(f.title)}" data-file="${escapeHtml(f.file)}">
   <td>${escapeHtml(f.title)}</td>
   <td><code>${escapeHtml(f.file)}:${f.line}</code></td>
   <td>${escapeHtml(advice)}</td>
+    <td>${
+      typeof f.unsupportedPercent === "number"
+        ? escapeHtml(String(f.unsupportedPercent)) + "%"
+        : ""
+    }</td>
   <td>${escapeHtml(f.suggestion || "")}</td>
   <td><a href="${escapeHtml(f.docsUrl)}" target="_blank" rel="noreferrer noopener">Docs</a></td>
 </tr>`;
@@ -132,6 +187,10 @@ function renderHtmlReport(report: any): string {
     h1 { font-size: 20px; margin: 0 0 6px; }
     .meta { color: var(--muted); font-size: 12px; }
     .totals { margin: 12px 0 20px; font-weight: 600; }
+    .toolbar { display:flex; gap:12px; align-items:center; flex-wrap: wrap; margin: 8px 0 16px; padding: 8px; border:1px solid var(--line); border-radius: 8px; }
+    .toolbar .group { display:flex; gap:8px; align-items:center; }
+    .toolbar label { font-size: 12px; color: var(--muted); }
+    .toolbar input[type="search"], .toolbar select { padding:6px 8px; border:1px solid var(--line); border-radius:6px; font-size:12px; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 10px 8px; vertical-align: top; }
     thead th { border-bottom: 2px solid var(--line); font-size: 12px; color: var(--muted); }
@@ -153,6 +212,27 @@ function renderHtmlReport(report: any): string {
     <div class="totals">
       Total findings: ${Number(totals.total) ?? 0} • Non-Baseline: ${Number(totals.nonBaseline) ?? 0} • Safe: ${Number(totals.safe) ?? 0}
     </div>
+    <div class="toolbar">
+      <div class="group" id="advice-filters">
+        <label>Advice:</label>
+        <label><input type="checkbox" value="safe" checked> Safe</label>
+        <label><input type="checkbox" value="guarded" checked> Guarded</label>
+        <label><input type="checkbox" value="needs-guard" checked> Needs guard</label>
+      </div>
+      <div class="group">
+        <label for="search">Search:</label>
+        <input id="search" type="search" placeholder="feature, file…" />
+      </div>
+      <div class="group">
+        <label for="sort">Sort:</label>
+        <select id="sort">
+          <option value="feature">Feature</option>
+          <option value="file">Location</option>
+          <option value="advice">Advice</option>
+          <option value="unsupported">~Unsupported</option>
+        </select>
+      </div>
+    </div>
   </header>
   <main>
     <table>
@@ -161,6 +241,7 @@ function renderHtmlReport(report: any): string {
           <th>Feature</th>
           <th>Location</th>
           <th>Advice</th>
+            <th>~Unsupported</th>
           <th>Suggestion</th>
           <th>Docs</th>
         </tr>
@@ -170,14 +251,115 @@ function renderHtmlReport(report: any): string {
       </tbody>
     </table>
   </main>
+  <script>
+    (function() {
+      const tbody = document.getElementById('rows');
+      const filters = Array.from(document.querySelectorAll('#advice-filters input[type="checkbox"]'));
+      const search = document.getElementById('search');
+      const sortSel = document.getElementById('sort');
+
+      function normalize(s) { return (s||'').toLowerCase(); }
+
+      function apply() {
+        const allowed = new Set(filters.filter(f => f.checked).map(f => f.value));
+        const q = normalize(search.value);
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        for (const r of rows) {
+          const advice = r.getAttribute('data-advice') || '';
+          const feat = normalize(r.getAttribute('data-feature'));
+          const file = normalize(r.getAttribute('data-file'));
+          const okAdvice = allowed.has(advice);
+          const okQuery = !q || feat.includes(q) || file.includes(q);
+          r.style.display = (okAdvice && okQuery) ? '' : 'none';
+        }
+        sortRows(rows);
+      }
+
+      function sortRows(rows) {
+        const key = sortSel.value;
+        const cmp = {
+          feature: (a,b) => (a.getAttribute('data-feature')||'').localeCompare(b.getAttribute('data-feature')||''),
+          file: (a,b) => (a.getAttribute('data-file')||'').localeCompare(b.getAttribute('data-file')||''),
+          advice: (a,b) => order(a.getAttribute('data-advice')) - order(b.getAttribute('data-advice')),
+          unsupported: (a,b) => (parseFloat(a.getAttribute('data-unsupported')||'-1')||-1) - (parseFloat(b.getAttribute('data-unsupported')||'-1')||-1)
+        }[key] || (()=>0);
+        rows.sort(cmp).forEach(r => tbody.appendChild(r));
+      }
+
+      function order(a) { return a === 'needs-guard' ? 2 : a === 'guarded' ? 1 : 0; }
+
+      filters.forEach(cb => cb.addEventListener('change', apply));
+      search.addEventListener('input', apply);
+      sortSel.addEventListener('change', apply);
+      apply();
+    })();
+  </script>
 </body>
 </html>`;
+}
+
+function toSarif(report: any) {
+  const findings = (report?.findings as any[]) ?? [];
+  const rulesMap = new Map<string, any>();
+  const results: any[] = [];
+  for (const f of findings) {
+    const ruleId = f.featureId || f.title;
+    if (!rulesMap.has(ruleId)) {
+      rulesMap.set(ruleId, {
+        id: ruleId,
+        name: f.title,
+        helpUri: f.docsUrl,
+        shortDescription: { text: f.title },
+        fullDescription: { text: f.suggestion || f.title },
+        properties: { baseline: f.baseline },
+      });
+    }
+    const level =
+      f.advice === "safe"
+        ? "note"
+        : f.advice === "guarded"
+          ? "warning"
+          : "warning";
+    results.push({
+      ruleId,
+      level,
+      message: { text: `${f.title} — ${f.advice ?? f.baseline}` },
+      locations: [
+        {
+          physicalLocation: {
+            artifactLocation: { uri: f.file.replace(/\\/g, "/") },
+            region: { startLine: f.line, startColumn: f.column },
+          },
+        },
+      ],
+    });
+  }
+  const rules = Array.from(rulesMap.values());
+  return {
+    $schema: "https://json.schemastore.org/sarif-2.1.0.json",
+    version: "2.1.0",
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: "baseline-scan",
+            rules,
+          },
+        },
+        results,
+      },
+    ],
+  };
 }
 
 async function main() {
   const argv = parseArgs(process.argv);
   const targetPath = argv.path ?? ".";
   const norm = targetPath.replace(/\\/g, "/");
+  const { config: cfg, path: cfgPath } = await loadConfig(
+    targetPath,
+    argv.configPath
+  );
   let files: string[];
   if (argv.files && argv.files.length > 0) {
     files = await globby(argv.files, {
@@ -187,15 +369,47 @@ async function main() {
     });
   } else {
     const patterns = [`${norm}/**/*.{js,jsx,ts,tsx,css,scss,html}`];
-    files = await globby(patterns, { gitignore: true, dot: false });
+    const ignore = (cfg?.ignore || []).map((p) =>
+      path.posix.join(norm, p.replace(/\\/g, "/"))
+    );
+    files = await globby(patterns, { gitignore: true, dot: false, ignore });
   }
   const fileRefs: FileRef[] = [];
   for (const p of files) {
     const content = await fs.readFile(p, "utf8");
     fileRefs.push({ path: p, content });
   }
-  const targets = await loadTargets(path.resolve(targetPath));
+  const cfgTargets = Array.isArray(cfg?.targets)
+    ? (cfg?.targets as string[])
+    : typeof cfg?.targets === "string"
+      ? [cfg?.targets as string]
+      : undefined;
+  const targets = cfgTargets ?? (await loadTargets(path.resolve(targetPath)));
   const findings = analyze(fileRefs, { targets });
+  // Apply unsupported threshold: reclassify needs-guard -> safe if <= threshold
+  const threshold =
+    argv.unsupportedThreshold != null
+      ? argv.unsupportedThreshold
+      : cfg?.unsupportedThreshold;
+  const adjusted =
+    threshold == null
+      ? findings
+      : findings.map((f: any) => {
+          if (
+            typeof f.unsupportedPercent === "number" &&
+            f.advice === "needs-guard" &&
+            f.unsupportedPercent <= threshold
+          ) {
+            return { ...f, advice: "safe", severity: "info" };
+          }
+          return f;
+        });
+  // Apply feature toggles
+  const filtered = adjusted.filter((f: any) => {
+    if (!cfg?.features) return true;
+    const v = cfg.features[f.featureId];
+    return v !== false;
+  });
   const nonBaseline = findings.filter((f: any) => f.baseline !== "yes");
   const guardedCount = (findings as any[]).filter(
     (f) => (f as any).advice === "guarded"
@@ -205,19 +419,29 @@ async function main() {
       targets: targets ?? null,
       filesScanned: files.length,
       generatedAt: new Date().toISOString(),
+      configPath: cfgPath ?? null,
+      unsupportedThreshold: threshold ?? null,
     },
     totals: {
-      total: findings.length,
-      nonBaseline: nonBaseline.length - guardedCount,
-      safe: findings.length - nonBaseline.length + guardedCount,
+      total: filtered.length,
+      nonBaseline: filtered.filter(
+        (f: any) =>
+          f.baseline !== "yes" && f.advice !== "guarded" && f.advice !== "safe"
+      ).length,
+      safe: filtered.filter(
+        (f: any) => f.advice === "safe" || f.advice === "guarded"
+      ).length,
     },
-    findings,
+    findings: filtered,
   };
   if (argv.report) {
     const ext = path.extname(argv.report || "").toLowerCase();
     if (ext === ".html" || ext === ".htm") {
       const html = renderHtmlReport(report);
       await fs.writeFile(argv.report, html, "utf8");
+    } else if (ext === ".sarif") {
+      const sarif = toSarif(report);
+      await fs.writeFile(argv.report, JSON.stringify(sarif, null, 2), "utf8");
     } else {
       await fs.writeFile(argv.report, JSON.stringify(report, null, 2), "utf8");
     }
@@ -227,7 +451,7 @@ async function main() {
     process.exitCode = argv.exitZero ? 0 : nonBaseline.length > 0 ? 1 : 0;
     return;
   }
-  const code = formatFindings(findings, targets);
+  const code = formatFindings(adjusted as any, targets);
   process.exitCode = argv.exitZero ? 0 : code;
 }
 

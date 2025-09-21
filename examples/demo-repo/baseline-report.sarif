@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "baseline-scan",
+          "rules": [
+            {
+              "id": "structured-clone",
+              "name": "structuredClone()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/structuredClone",
+              "shortDescription": {
+                "text": "structuredClone()"
+              },
+              "fullDescription": {
+                "text": "Prefer structuredClone over deep-clone utilities; guard if targeting older browsers."
+              },
+              "properties": {
+                "baseline": "yes"
+              }
+            },
+            {
+              "id": "navigator-share",
+              "name": "Web Share API",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
+              "shortDescription": {
+                "text": "Web Share API"
+              },
+              "fullDescription": {
+                "text": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "url-canparse",
+              "name": "URL.canParse()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
+              "shortDescription": {
+                "text": "URL.canParse()"
+              },
+              "fullDescription": {
+                "text": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "html-popover",
+              "name": "Popover attribute",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/Popover_API",
+              "shortDescription": {
+                "text": "Popover attribute"
+              },
+              "fullDescription": {
+                "text": "Fallback: use <dialog> or a custom popover component."
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "css-has",
+              "name": "CSS :has()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/CSS/:has",
+              "shortDescription": {
+                "text": "CSS :has()"
+              },
+              "fullDescription": {
+                "text": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors. (about 6% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "css-container-queries",
+              "name": "CSS Container Queries",
+              "helpUri": "https://developer.mozilla.org/docs/Web/CSS/CSS_container_queries",
+              "shortDescription": {
+                "text": "CSS Container Queries"
+              },
+              "fullDescription": {
+                "text": "Provide responsive fallbacks using media queries when container queries are unsupported. (about 6% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "css-color-oklch",
+              "name": "CSS oklch()/oklab() colors",
+              "helpUri": "https://developer.mozilla.org/docs/Web/CSS/color_value/oklch",
+              "shortDescription": {
+                "text": "CSS oklch()/oklab() colors"
+              },
+              "fullDescription": {
+                "text": "Provide fallback colors or color-mix() alternatives when unsupported."
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "structured-clone",
+          "level": "note",
+          "message": {
+            "text": "structuredClone() — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/app.ts"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 29
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "structured-clone",
+          "level": "note",
+          "message": {
+            "text": "structuredClone() — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/app.ts"
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 13
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "navigator-share",
+          "level": "warning",
+          "message": {
+            "text": "Web Share API — guarded"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/app.ts"
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "url-canparse",
+          "level": "warning",
+          "message": {
+            "text": "URL.canParse() — guarded"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/app.ts"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "html-popover",
+          "level": "warning",
+          "message": {
+            "text": "Popover attribute — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/index.html"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 13
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-has",
+          "level": "warning",
+          "message": {
+            "text": "CSS :has() — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/styles.css"
+                },
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-container-queries",
+          "level": "warning",
+          "message": {
+            "text": "CSS Container Queries — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/styles.css"
+                },
+                "region": {
+                  "startLine": 6,
+                  "startColumn": 1
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-color-oklch",
+          "level": "warning",
+          "message": {
+            "text": "CSS oklch()/oklab() colors — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/styles.css"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 21
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

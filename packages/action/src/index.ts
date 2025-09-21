@@ -81,13 +81,13 @@ async function run() {
         // add code block with a generic snippet based on featureId
         let snippet = "";
         if (f.featureId === "navigator-share") {
-          snippet = `if (navigator.share) {\n  await navigator.share({ title: document.title, url: location.href });\n} else {\n  // TODO: fallback\n}`;
+          snippet = `import { canShare } from '@baseline-tools/helpers';\n\nif (canShare()) {\n  await navigator.share({ title: document.title, url: location.href });\n} else {\n  // TODO: fallback\n}`;
         } else if (f.featureId === "url-canparse") {
-          snippet = `function canParse(u){ try { new URL(u); return true; } catch { return false; } }`;
+          snippet = `import { canParseUrl } from '@baseline-tools/helpers';\n\nif (canParseUrl(myUrl)) {\n  // valid\n} else {\n  // fallback\n}`;
         } else if (f.featureId === "view-transitions") {
-          snippet = `if ('startViewTransition' in document) {\n  // document.startViewTransition(() => { ... })\n} else {\n  // fallback\n}`;
+          snippet = `import { hasViewTransitions } from '@baseline-tools/helpers';\n\nif (hasViewTransitions()) {\n  // document.startViewTransition(() => { /* ... */ })\n} else {\n  // fallback\n}`;
         } else if (f.featureId === "file-system-access-picker") {
-          snippet = `// Fallback: <input type=\"file\"> for older browsers\nconst input = document.createElement('input');\ninput.type = 'file';\ninput.click();`;
+          snippet = `import { canShowOpenFilePicker } from '@baseline-tools/helpers';\n\nif (canShowOpenFilePicker()) {\n  // await showOpenFilePicker()\n} else {\n  // fallback: <input type=\"file\">\n}`;
         }
         if (snippet) {
           lines.push("  - Example:");
@@ -110,6 +110,7 @@ async function run() {
       await pexec(cmd);
       core.setOutput("html-report", htmlReportPath);
       core.summary.addRaw(`\n\nReport saved to: ${htmlReportPath}`);
+      lines.push(`\nHTML report: ${htmlReportPath} (see workflow Artifacts)`);
     }
     await core.summary.write();
 

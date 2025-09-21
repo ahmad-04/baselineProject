@@ -14,6 +14,7 @@ export interface Finding {
   suggestion?: string;
   guarded?: boolean;
   advice?: "safe" | "needs-guard" | "guarded";
+  unsupportedPercent?: number;
 }
 
 export interface AnalyzeOptions {
@@ -269,6 +270,7 @@ export function analyze(
         const pct = getSupport(f.featureId, targets);
         if (typeof pct === "number") {
           const unsupported = Math.max(0, Math.round(100 - pct));
+          (f as any).unsupportedPercent = unsupported;
           f.suggestion = f.suggestion
             ? `${f.suggestion} (about ${unsupported}% of your targets may lack support)`
             : `About ${unsupported}% of your targets may lack support.`;

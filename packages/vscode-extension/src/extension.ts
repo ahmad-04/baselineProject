@@ -94,6 +94,9 @@ function computeDiagnostics(doc: vscode.TextDocument) {
     if (f.suggestion) {
       (diag as any).suggestion = f.suggestion;
     }
+    if ((f as any).unsupportedPercent != null) {
+      (diag as any).unsupportedPercent = (f as any).unsupportedPercent;
+    }
     diags.push(diag);
   }
   DIAG_COLLECTION.set(doc.uri, diags);
@@ -115,6 +118,8 @@ class HoverProvider implements vscode.HoverProvider {
     if (d.docsUrl) lines.push(`Docs: ${d.docsUrl}`);
     const targets = loadTargetsFromWorkspace(doc);
     if (targets && targets.length) lines.push(`Targets: ${targets.join(", ")}`);
+    if (typeof d.unsupportedPercent === "number")
+      lines.push(`~Unsupported: ${d.unsupportedPercent}%`);
     return new vscode.Hover(lines.join("\n"));
   }
 }
@@ -155,12 +160,28 @@ class CodeActionProvider implements vscode.CodeActionProvider {
       const code = this.snippetFor(d.code!, s);
       if (!code) continue;
       const action = new vscode.CodeAction(
-        "Insert Baseline guard/fallback",
+        "Insert Baseline guard/fallback (helpers)",
         vscode.CodeActionKind.QuickFix
       );
       action.diagnostics = [d];
-      action.edit = new vscode.WorkspaceEdit();
-      action.edit.insert(doc.uri, d.range.start, code + "\n");
+      const edit = new vscode.WorkspaceEdit();
+      // Ensure helpers import exists for known features
+      const text = doc.getText();
+      let importLine: string | undefined;
+      const id = String(d.code || "");
+      if (id === "navigator-share")
+        importLine = `import { canShare } from '@baseline-tools/helpers';\n`;
+      else if (id === "url-canparse")
+        importLine = `import { canParseUrl } from '@baseline-tools/helpers';\n`;
+      else if (id === "view-transitions")
+        importLine = `import { hasViewTransitions } from '@baseline-tools/helpers';\n`;
+      else if (id === "file-system-access-picker")
+        importLine = `import { canShowOpenFilePicker } from '@baseline-tools/helpers';\n`;
+      if (importLine && !text.includes("@baseline-tools/helpers")) {
+        edit.insert(doc.uri, new vscode.Position(0, 0), importLine + "\n");
+      }
+      edit.insert(doc.uri, d.range.start, code + "\n");
+      action.edit = edit;
       actions.push(action);
     }
     return actions;

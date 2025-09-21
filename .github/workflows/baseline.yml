@@ -25,6 +25,12 @@ jobs:
         with:
           name: baseline-report
           path: baseline-report.json
+      - name: Generate SARIF
+        run: node packages/cli/dist/index.js examples/demo-repo --report baseline-report.sarif --exit-zero
+      - name: Upload SARIF to Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: baseline-report.sarif
       - name: Baseline Guard comment
         uses: ./packages/action
         with:

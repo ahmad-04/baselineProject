@@ -1,0 +1,9 @@
+{
+  "targets": ">0.5% and not dead",
+  "unsupportedThreshold": 5,
+  "ignore": ["**/dist/**", "**/node_modules/**"],
+  "features": {
+    "urlpattern": true,
+    "css-has": true
+  }
+}
