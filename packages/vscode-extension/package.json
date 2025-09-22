@@ -5,6 +5,10 @@
   "version": "0.0.1",
   "publisher": "your-publisher",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ahmad-04/baselineProject.git"
+  },
   "engines": {
     "vscode": "^1.84.0"
   },
@@ -27,8 +31,36 @@
       {
         "command": "baseline.scanWorkspace",
         "title": "Baseline: Scan Workspace"
+      },
+      {
+        "command": "baseline.toggleScanMode",
+        "title": "Baseline: Toggle Scan Mode (change/save)"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Baseline Guardrails",
+      "properties": {
+        "baseline.scanOnChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Scan on change (true) or only on save (false)."
+        },
+        "baseline.targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Optional override for Browserslist targets used by Baseline analysis. When set, this takes precedence over baseline.config.json and nearest package.json browserslist. Example: ['> 0.5%', 'not dead', 'chrome >= 120']."
+        },
+        "baseline.unsupportedThreshold": {
+          "type": "number",
+          "default": -1,
+          "markdownDescription": "Optional override for unsupported percentage threshold. When > -1, findings with unsupported <= this value are treated as safe.",
+          "minimum": -1
+        }
+      }
+    }
   },
   "scripts": {
     "build": "npx tsc -p tsconfig.json",

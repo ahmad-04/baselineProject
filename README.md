@@ -68,11 +68,18 @@ baseline-scan <path> [--json] [--report <file>] [--exit-zero] [--files <csv>] [-
 - `--files <csv>`: only scan the provided files/globs (used for PR diffs)
 - `--unsupported-threshold <n>`: treat “needs-guard” as “safe” when unsupported percentage is `<= n`
 - `--config <path>`: path to `baseline.config.json` to override defaults
+- `--changed`: scan only files changed vs `HEAD` (includes untracked)
+- `--since <ref>`: use a different base ref for `--changed` (e.g., `origin/main`)
+- `--cache`: enable content‑hash cache (v3) for faster subsequent runs
+- `--cache-file <path>`: custom cache file location (default: `.baseline-scan-cache.json`)
 
 Notes:
 
 - The CLI reads `browserslist` from the scanned path’s `package.json` when present.
 - Totals treat Guarded findings as safe.
+- With `--changed` and no modified files, the CLI exits 0 and writes an empty report if `--report` is provided.
+
+See also: `docs/incremental-scanning.md`.
 
 ## ESLint Rule
 

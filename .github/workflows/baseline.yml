@@ -42,3 +42,33 @@ jobs:
         with:
           name: baseline-html-report
           path: examples/demo-repo/baseline-report.html
+  scan-changed:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm ci || npm i
+      - name: Build packages
+        run: npm run build
+      - name: Baseline scan (changed files)
+        run: node packages/cli/dist/index.js --changed --cache --report baseline-report.sarif --exit-zero
+      - name: Upload SARIF to Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: baseline-report.sarif
+      - name: Generate HTML report
+        run: node packages/cli/dist/index.js --changed --cache --report baseline-report.html --exit-zero || true
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-html-report-changed
+          path: baseline-report.html

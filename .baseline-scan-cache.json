@@ -1,0 +1,66 @@
+{
+  "version": 3,
+  "targets": [
+    ">0.5% and not dead"
+  ],
+  "configHash": "7194508e951acb02bbfbb9436ba0d2c5fee5cae2",
+  "byFile": {
+    "C:/Github_projects/baselineProject/baseline-report.html": {
+      "mtimeMs": 1758546194120.443,
+      "contentHash": "2604bacadcccc37ce0190eb87501b011c378ea34",
+      "result": []
+    },
+    "C:/Github_projects/baselineProject/packages/cli/src/index.ts": {
+      "mtimeMs": 1758546300685.8025,
+      "contentHash": "3468602d593735d7fde07fc22f6abac0774a837d",
+      "result": []
+    },
+    "C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts": {
+      "mtimeMs": 1758544150257.4214,
+      "contentHash": "8a140ce320cb9d2ab76d799db097784181f17591",
+      "result": [
+        {
+          "file": "C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts",
+          "line": 226,
+          "column": 121,
+          "featureId": "urlpattern",
+          "title": "URLPattern",
+          "baseline": "partial",
+          "severity": "warn",
+          "docsUrl": "https://developer.mozilla.org/docs/Web/API/URL_Pattern_API",
+          "suggestion": "Fallback: use the urlpattern-polyfill or Regex-based matching.",
+          "guarded": false,
+          "advice": "needs-guard"
+        },
+        {
+          "file": "C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts",
+          "line": 222,
+          "column": 64,
+          "featureId": "view-transitions",
+          "title": "View Transitions API",
+          "baseline": "partial",
+          "severity": "info",
+          "docsUrl": "https://developer.mozilla.org/docs/Web/API/Document/startViewTransition",
+          "suggestion": "Guard: if ('startViewTransition' in document) { ... } else { ... } (about 24% of your targets may lack support)",
+          "guarded": true,
+          "advice": "guarded",
+          "unsupportedPercent": 24
+        },
+        {
+          "file": "C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts",
+          "line": 218,
+          "column": 49,
+          "featureId": "navigator-share",
+          "title": "Web Share API",
+          "baseline": "partial",
+          "severity": "info",
+          "docsUrl": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
+          "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)",
+          "guarded": true,
+          "advice": "guarded",
+          "unsupportedPercent": 18
+        }
+      ]
+    }
+  }
+}

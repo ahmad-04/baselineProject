@@ -5,6 +5,10 @@ import { analyze, type FileRef } from "@baseline-tools/core";
 import { globby } from "globby";
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
+import { execFile as _execFile } from "node:child_process";
+import { promisify } from "node:util";
+const execFile = promisify(_execFile);
 
 async function loadTargets(cwd: string): Promise<string[] | undefined> {
   const pkg = await readPackageUp({ cwd });
@@ -53,6 +57,15 @@ async function loadConfig(
     // ignore
   }
   return {};
+}
+
+function hashConfig(obj: any): string | undefined {
+  try {
+    const json = JSON.stringify(obj ?? null);
+    return crypto.createHash("sha1").update(json).digest("hex");
+  } catch {
+    return undefined;
+  }
 }
 
 function formatFindings(
@@ -106,11 +119,16 @@ function parseArgs(argv: string[]) {
     configPath: undefined as string | undefined,
     cache: false as boolean,
     cacheFile: ".baseline-scan-cache.json" as string,
+    changed: false as boolean,
+    since: undefined as string | undefined,
   };
   const rest: string[] = [];
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--json") args.json = true;
+    if (a === "--help" || a === "-h") {
+      printHelp();
+      process.exit(0);
+    } else if (a === "--json") args.json = true;
     else if (a === "--exit-zero") args.exitZero = true;
     else if (a === "--report") {
       args.report = argv[++i];
@@ -131,12 +149,21 @@ function parseArgs(argv: string[]) {
       args.cache = true;
     } else if (a === "--cache-file") {
       args.cacheFile = argv[++i] || args.cacheFile;
+    } else if (a === "--changed") {
+      args.changed = true;
+    } else if (a === "--since") {
+      args.since = argv[++i];
     } else if (!a.startsWith("-")) {
       rest.push(a);
     }
   }
   if (rest[0]) args.path = rest[0];
   return args;
+}
+
+function printHelp() {
+  const usage = `\nUsage: baseline-scan <path> [options]\n\nOptions:\n  --json                       Output JSON to stdout\n  --report <file>              Write report (.json, .html, .sarif)\n  --exit-zero                  Exit with code 0 regardless of findings\n  --files <csv>                Comma-separated file globs to scan\n  --unsupported-threshold <n>  Reclassify \'needs-guard\' to \'safe\' when unsupported% <= n\n  --config <path>              Path to baseline.config.json\n  --changed                    Scan only files changed vs HEAD (includes untracked)\n  --since <ref>                Base ref for --changed (e.g., origin/main)\n  --cache                      Enable content-hash cache (v3)\n  --cache-file <path>          Path to cache file (default .baseline-scan-cache.json)\n  -h, --help                   Show this help\n`;
+  console.log(usage);
 }
 
 function escapeHtml(s: string): string {
@@ -252,14 +279,14 @@ function renderHtmlReport(report: any): string {
           <th>Docs</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="rows">
         ${rows}
       </tbody>
     </table>
   </main>
   <script>
     (function() {
-      const tbody = document.getElementById('rows');
+  const tbody = document.getElementById('rows');
       const filters = Array.from(document.querySelectorAll('#advice-filters input[type="checkbox"]'));
       const search = document.getElementById('search');
       const sortSel = document.getElementById('sort');
@@ -385,11 +412,55 @@ async function main() {
       absolute: true,
     });
   }
+  if (argv.changed) {
+    const changed = await getChangedFiles(path.resolve(targetPath), argv.since);
+    if (changed && changed.length) {
+      const changedSet = new Set(changed.map((p) => p.replace(/\\/g, "/")));
+      files = files.filter((p) => changedSet.has(p.replace(/\\/g, "/")));
+    } else if (Array.isArray(changed) && changed.length === 0) {
+      const emptyReport = {
+        meta: {
+          targets: null,
+          filesScanned: 0,
+          generatedAt: new Date().toISOString(),
+          configPath: cfgPath ?? null,
+          unsupportedThreshold: null,
+        },
+        totals: { total: 0, nonBaseline: 0, safe: 0 },
+        findings: [],
+      };
+      if (argv.report) {
+        const ext = path.extname(argv.report || "").toLowerCase();
+        if (ext === ".html" || ext === ".htm") {
+          const html = renderHtmlReport(emptyReport);
+          await fs.writeFile(argv.report, html, "utf8");
+        } else if (ext === ".sarif") {
+          const sarif = toSarif(emptyReport);
+          await fs.writeFile(
+            argv.report,
+            JSON.stringify(sarif, null, 2),
+            "utf8"
+          );
+        } else {
+          await fs.writeFile(
+            argv.report,
+            JSON.stringify(emptyReport, null, 2),
+            "utf8"
+          );
+        }
+      }
+      if (!argv.json)
+        console.log(pc.dim("No changed files detected. Skipping scan."));
+      process.exitCode = 0;
+      return;
+    }
+  }
   // Simple file mtime-based cache
-  type CacheEntry = { mtimeMs: number; result: any[] };
+  type CacheEntry = { mtimeMs: number; contentHash?: string; result: any[] };
   type CacheShape = {
-    version: 1;
+    version: 3;
     targets: string[] | undefined;
+    configHash?: string | undefined;
     byFile: Record<string, CacheEntry>;
   };
   let cache: CacheShape | undefined;
@@ -399,15 +470,23 @@ async function main() {
       const raw = await fs.readFile(cachePath, "utf8");
       cache = JSON.parse(raw) as CacheShape;
     } catch {
-      cache = { version: 1, targets: undefined, byFile: {} } as CacheShape;
+      cache = {
+        version: 3,
+        targets: undefined,
+        configHash: undefined,
+        byFile: {},
+      } as CacheShape;
     }
   }
 
   const fileRefs: FileRef[] = [];
   const perFileFindings: any[] = [];
+  const contentHashByPath = new Map<string, string>();
   for (const p of files) {
     const content = await fs.readFile(p, "utf8");
     fileRefs.push({ path: p, content });
+    const h = crypto.createHash("sha1").update(content).digest("hex");
+    contentHashByPath.set(p.replace(/\\/g, "/"), h);
   }
   const cfgTargets = Array.isArray(cfg?.targets)
     ? (cfg?.targets as string[])
@@ -415,21 +494,30 @@ async function main() {
       ? [cfg?.targets as string]
       : undefined;
   const targets = cfgTargets ?? (await loadTargets(path.resolve(targetPath)));
+  const configHash = hashConfig(cfg);
   let findings: any[] = [];
   if (argv.cache && cache) {
+    // Invalidate cache wholesale if version or configHash mismatch
+    const usable = cache.version === 3 && cache.configHash === configHash;
     const updatedCache: CacheShape = {
-      version: 1,
+      version: 3,
       targets,
+      configHash,
       byFile: {},
     } as CacheShape;
     for (const ref of fileRefs) {
       try {
         const stat = await (await import("node:fs/promises")).stat(ref.path);
         const mtimeMs = stat.mtimeMs;
-        const prev = cache.byFile?.[ref.path.replace(/\\/g, "/")];
+        const key = ref.path.replace(/\\/g, "/");
+        const prev = cache.byFile?.[key];
+        const currHash = contentHashByPath.get(key);
         if (
+          usable &&
           prev &&
-          prev.mtimeMs === mtimeMs &&
+          prev.contentHash &&
+          currHash &&
+          prev.contentHash === currHash &&
           JSON.stringify(cache.targets) === JSON.stringify(targets)
         ) {
           const reused = prev.result.map((f: any) => ({
@@ -437,15 +525,16 @@ async function main() {
             file: ref.path,
           }));
           findings.push(...reused);
-          updatedCache.byFile[ref.path.replace(/\\/g, "/")] = prev;
+          updatedCache.byFile[key] = prev;
           continue;
         }
         const res = analyze([{ path: ref.path, content: ref.content }], {
           targets,
         });
         findings.push(...res);
-        updatedCache.byFile[ref.path.replace(/\\/g, "/")] = {
+        updatedCache.byFile[key] = {
           mtimeMs,
+          contentHash: currHash,
           result: res,
         };
       } catch {
@@ -537,3 +626,41 @@ main().catch((err) => {
   console.error(pc.red(String(err?.stack || err)));
   process.exitCode = 1;
 });
+
+async function getChangedFiles(
+  cwd: string,
+  since?: string
+): Promise<string[] | undefined> {
+  try {
+    const { stdout: inside } = await execFile(
+      "git",
+      ["rev-parse", "--is-inside-work-tree"],
+      { cwd }
+    );
+    if (!/^true/.test(String(inside).trim())) return undefined;
+    const diffArgs = [
+      "--no-optional-locks",
+      "diff",
+      "--name-only",
+      "--diff-filter=ACMRTUXB",
+      since || "HEAD",
+    ];
+    const lsArgs = ["ls-files", "--others", "--exclude-standard"];
+    const [diff, untracked] = await Promise.all([
+      execFile("git", diffArgs, { cwd })
+        .then((r) => r.stdout)
+        .catch(() => ""),
+      execFile("git", lsArgs, { cwd })
+        .then((r) => r.stdout)
+        .catch(() => ""),
+    ]);
+    const lines = `${diff}\n${untracked}`
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const abs = Array.from(new Set(lines)).map((p) => path.resolve(cwd, p));
+    return abs;
+  } catch {
+    return undefined;
+  }
+}

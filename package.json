@@ -21,12 +21,17 @@
     "test": "npm run build && npm --prefix packages/core run test && npm --prefix packages/cli run test && npm --prefix packages/action run test && npm --prefix packages/eslint-plugin-baseline run test",
     "format": "prettier --write .",
     "lint": "eslint . --ext .ts,.tsx,.js",
-    "clean": "rimraf packages/**/dist packages/**/node_modules"
+    "clean": "rimraf packages/**/dist packages/**/node_modules",
+    "release:version": "changeset version && npm i --package-lock-only",
+    "release:publish": "npm -w packages/core publish --access public && npm -w packages/helpers publish --access public && npm -w packages/cli publish --access public && npm -w packages/eslint-plugin-baseline publish --access public && npm -w packages/action publish --access public",
+    "vsce:package": "cd packages/vscode-extension && npx @vscode/vsce package --no-dependencies --out ../../baseline-guardrails-vscode.vsix"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
     "eslint": "^9.9.0",
     "prettier": "^3.3.3",
+    "@changesets/cli": "^2.27.8",
+    "@changesets/changelog-github": "^0.5.0",
     "rimraf": "^5.0.5",
     "typescript": "^5.5.4"
   },
