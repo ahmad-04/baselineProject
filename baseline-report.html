@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Baseline Adoption Report</title>
+  <style>
+    :root { --fg:#0b0d12; --muted:#5a6372; --ok:#0a7f3f; --warn:#b88300; --err:#b11; --bg:#fff; --line:#e8ecf2; }
+    body { font-family: ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji; margin: 24px; color: var(--fg); background: var(--bg); }
+    header { margin-bottom: 16px; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .meta { color: var(--muted); font-size: 12px; }
+    .totals { margin: 12px 0 20px; font-weight: 600; }
+    .toolbar { display:flex; gap:12px; align-items:center; flex-wrap: wrap; margin: 8px 0 16px; padding: 8px; border:1px solid var(--line); border-radius: 8px; }
+    .toolbar .group { display:flex; gap:8px; align-items:center; }
+    .toolbar label { font-size: 12px; color: var(--muted); }
+    .toolbar input[type="search"], .toolbar select { padding:6px 8px; border:1px solid var(--line); border-radius:6px; font-size:12px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; vertical-align: top; }
+    thead th { border-bottom: 2px solid var(--line); font-size: 12px; color: var(--muted); }
+    tbody tr { border-bottom: 1px solid var(--line); }
+    code { background: #f6f8fa; border: 1px solid #eaeef2; padding: 1px 4px; border-radius: 3px; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .badge.safe { background: #e8f7ee; color: var(--ok); border: 1px solid #c7ecd6; }
+    .badge.needs { background: #fff7e5; color: var(--warn); border: 1px solid #ffe7a6; }
+    .badge.guarded { background: #eef4ff; color: #2b5fd9; border: 1px solid #d8e3ff; }
+  </style>
+  </head>
+<body>
+  <header>
+    <h1>Baseline Adoption Report</h1>
+    <div class="meta">
+      Targets: &gt;0.5% and not dead
+       • Generated: 2025-09-21T15:16:25.797Z
+    </div>
+    <div class="totals">
+      Total findings: 9 • Non-Baseline: 5 • Safe: 4
+    </div>
+    <div class="toolbar">
+      <div class="group" id="advice-filters">
+        <label>Advice:</label>
+        <label><input type="checkbox" value="safe" checked> Safe</label>
+        <label><input type="checkbox" value="guarded" checked> Guarded</label>
+        <label><input type="checkbox" value="needs-guard" checked> Needs guard</label>
+      </div>
+      <div class="group">
+        <label for="search">Search:</label>
+        <input id="search" type="search" placeholder="feature, file…" />
+      </div>
+      <div class="group">
+        <label for="sort">Sort:</label>
+        <select id="sort">
+          <option value="feature">Feature</option>
+          <option value="file">Location</option>
+          <option value="advice">Advice</option>
+          <option value="unsupported">~Unsupported</option>
+        </select>
+      </div>
+    </div>
+  </header>
+  <main>
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Location</th>
+          <th>Advice</th>
+            <th>~Unsupported</th>
+          <th>Suggestion</th>
+          <th>Docs</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-advice="needs-guard" data-unsupported="" data-feature="Popover attribute" data-file="C:/Github_projects/baselineProject/examples/demo-repo/baseline-report.html">
+  <td>Popover attribute</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/baseline-report.html:111</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Fallback: use &lt;dialog&gt; or a custom popover component.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Popover_API" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="structuredClone()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>structuredClone()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:3</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Prefer structuredClone over deep-clone utilities; guard if targeting older browsers.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/structuredClone" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="structuredClone()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>structuredClone()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:4</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Prefer structuredClone over deep-clone utilities; guard if targeting older browsers.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/structuredClone" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="guarded" data-unsupported="18" data-feature="Web Share API" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>Web Share API</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:12</code></td>
+  <td>Guarded</td>
+    <td>18%</td>
+  <td>Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Navigator/share" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="guarded" data-unsupported="0" data-feature="URL.canParse()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>URL.canParse()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:9</code></td>
+  <td>Guarded</td>
+    <td>0%</td>
+  <td>Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/URL/canParse_static" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="Popover attribute" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/index.html">
+  <td>Popover attribute</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/index.html:9</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Fallback: use &lt;dialog&gt; or a custom popover component.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Popover_API" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="6" data-feature="CSS :has()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS :has()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:2</code></td>
+  <td>Needs guard</td>
+    <td>6%</td>
+  <td>Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors. (about 6% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/:has" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="6" data-feature="CSS Container Queries" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS Container Queries</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:6</code></td>
+  <td>Needs guard</td>
+    <td>6%</td>
+  <td>Provide responsive fallbacks using media queries when container queries are unsupported. (about 6% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/CSS_container_queries" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="CSS oklch()/oklab() colors" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS oklch()/oklab() colors</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:3</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Provide fallback colors or color-mix() alternatives when unsupported.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/color_value/oklch" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    (function() {
+      const tbody = document.getElementById('rows');
+      const filters = Array.from(document.querySelectorAll('#advice-filters input[type="checkbox"]'));
+      const search = document.getElementById('search');
+      const sortSel = document.getElementById('sort');
+
+      function normalize(s) { return (s||'').toLowerCase(); }
+
+      function apply() {
+        const allowed = new Set(filters.filter(f => f.checked).map(f => f.value));
+        const q = normalize(search.value);
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        for (const r of rows) {
+          const advice = r.getAttribute('data-advice') || '';
+          const feat = normalize(r.getAttribute('data-feature'));
+          const file = normalize(r.getAttribute('data-file'));
+          const okAdvice = allowed.has(advice);
+          const okQuery = !q || feat.includes(q) || file.includes(q);
+          r.style.display = (okAdvice && okQuery) ? '' : 'none';
+        }
+        sortRows(rows);
+      }
+
+      function sortRows(rows) {
+        const key = sortSel.value;
+        const cmp = {
+          feature: (a,b) => (a.getAttribute('data-feature')||'').localeCompare(b.getAttribute('data-feature')||''),
+          file: (a,b) => (a.getAttribute('data-file')||'').localeCompare(b.getAttribute('data-file')||''),
+          advice: (a,b) => order(a.getAttribute('data-advice')) - order(b.getAttribute('data-advice')),
+          unsupported: (a,b) => (parseFloat(a.getAttribute('data-unsupported')||'-1')||-1) - (parseFloat(b.getAttribute('data-unsupported')||'-1')||-1)
+        }[key] || (()=>0);
+        rows.sort(cmp).forEach(r => tbody.appendChild(r));
+      }
+
+      function order(a) { return a === 'needs-guard' ? 2 : a === 'guarded' ? 1 : 0; }
+
+      filters.forEach(cb => cb.addEventListener('change', apply));
+      search.addEventListener('input', apply);
+      sortSel.addEventListener('change', apply);
+      apply();
+    })();
+  </script>
+</body>
+</html>

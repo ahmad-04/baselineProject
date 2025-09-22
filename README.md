@@ -1,5 +1,7 @@
 # Baseline Guardrails
 
+[![Tests](https://github.com/ahmad-04/baselineProject/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmad-04/baselineProject/actions/workflows/tests.yml)
+
 Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Code, and GitHub PR comments, all powered by a shared core analyzer.
 
 - Core: `@baseline-tools/core` — regex-based detectors for modern web features, advice/guard flags, target-aware hints.
@@ -85,7 +87,15 @@ export default [
     files: ["src/**/*.{js,jsx,ts,tsx}"],
     plugins: { baseline },
     rules: {
-      "baseline/no-nonbaseline": "warn",
+      // Options override baseline.config.json
+      "baseline/no-nonbaseline": [
+        "warn",
+        {
+          targets: ">0.5% and not dead", // string or string[]
+          unsupportedThreshold: 5, // number; reclassify <= threshold as Safe
+          features: { urlpattern: true }, // per-feature toggles
+        },
+      ],
     },
   },
 ];
@@ -94,6 +104,7 @@ export default [
 - Reads `browserslist` (nearest `package.json`) and passes targets to the analyzer.
 - Message includes advice label; suggestions add non‑destructive guard/fallback templates.
 - Guarded usages are skipped (no warning).
+- Options precedence: ESLint rule options > `baseline.config.json` > nearest package `browserslist`.
 
 ## VS Code Extension
 
@@ -195,6 +206,28 @@ Generate SARIF with the CLI and upload to GitHub Code Scanning:
   with:
     sarif_file: baseline-report.sarif
 ```
+
+## Testing
+
+Run all tests from the repo root using Node’s built-in test runner:
+
+```bash
+cd C:/Github_projects/baselineProject
+npm run build
+npm run test
+```
+
+Notes:
+
+- Uses `node --test` (no watch) for fast, clean exits.
+- Core tests run under `packages/core/test/**/*.js`.
+- CLI tests exercise SARIF output and `--unsupported-threshold` behavior.
+- Action and ESLint packages currently have no tests; their `test` scripts are no-ops.
+- CLI scanning uses stable Windows-friendly absolute paths and `globby` with `cwd` to avoid path issues.
+
+CI:
+
+- GitHub Actions runs tests on Windows, macOS, and Linux across Node 18, 20, and 22.
 
 ## Demo Repo
 

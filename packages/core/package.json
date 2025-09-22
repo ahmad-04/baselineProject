@@ -10,6 +10,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
+    "@typescript-eslint/typescript-estree": "^7.18.0",
     "browserslist": "^4.23.0",
     "caniuse-lite": "^1.0.30001600",
     "web-features": "^1.0.0"

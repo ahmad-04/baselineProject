@@ -194,6 +194,10 @@ class CodeActionProvider implements vscode.CodeActionProvider {
         return `// Consider urlpattern-polyfill or regex-based matching\n// import 'urlpattern-polyfill';\n// const p = new URLPattern('https://example.com/:id');`;
       default:
         return suggestion ? `// ${suggestion}` : undefined;
+      case "css-color-mix":
+        return `/* Fallback: precompute color-mix() values for older browsers */`;
+      case "css-modal-pseudo":
+        return `/* Fallback: ensure non-modal behavior when :modal unsupported */`;
     }
   }
   provideCodeActions(doc: vscode.TextDocument, range: vscode.Range) {

@@ -12,7 +12,25 @@ const rule: Rule.RuleModule = {
         "Warn when code uses features that are not Baseline for the configured targets",
       recommended: true,
     },
-    schema: [],
+    schema: [
+      {
+        type: "object",
+        properties: {
+          targets: {
+            anyOf: [
+              { type: "array", items: { type: "string" } },
+              { type: "string" },
+            ],
+          },
+          unsupportedThreshold: { type: "number" },
+          features: {
+            type: "object",
+            additionalProperties: { type: "boolean" },
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
     hasSuggestions: true,
     messages: {
       nonBaseline: "{{title}} — {{advice}}. See: {{docsUrl}}",
@@ -22,6 +40,10 @@ const rule: Rule.RuleModule = {
         "Use try/catch with new URL(...) instead of URL.canParse",
       suggestViewTransitionGuard:
         "Guard document.startViewTransition with a feature check",
+      suggestDialogFallback:
+        "Use a dialog polyfill or provide a non-modal fallback with focus management",
+      suggestLazyEagerForLCP:
+        'Use loading="eager" for LCP/hero images; lazy for non-critical media',
     },
   },
   create(context) {
@@ -29,6 +51,7 @@ const rule: Rule.RuleModule = {
       Program() {
         const source: SourceCode = context.getSourceCode();
         const filePath = context.getFilename();
+        const opts = (context.options && context.options[0]) || {};
         type BaselineConfig = {
           targets?: string[] | string;
           unsupportedThreshold?: number;
@@ -83,21 +106,34 @@ const rule: Rule.RuleModule = {
           return undefined;
         }
         const cfg = loadConfig(filePath);
+        const optTargets = Array.isArray(opts?.targets)
+          ? (opts?.targets as string[])
+          : typeof opts?.targets === "string"
+            ? [opts?.targets as string]
+            : undefined;
         const cfgTargets = Array.isArray(cfg?.targets)
           ? (cfg?.targets as string[])
           : typeof cfg?.targets === "string"
             ? [cfg?.targets as string]
             : undefined;
-        const targets = cfgTargets ?? loadTargetsFromNearestPackage(filePath);
+        const targets =
+          optTargets ?? cfgTargets ?? loadTargetsFromNearestPackage(filePath);
         const res = analyze(
           [{ path: filePath, content: source.text } satisfies FileRef],
           { targets }
         );
         for (const f of res) {
-          if (cfg?.features && cfg.features[f.featureId] === false) continue;
+          const featureToggles = {
+            ...(cfg?.features || {}),
+            ...(opts?.features || {}),
+          } as Record<string, boolean>;
+          if (featureToggles && featureToggles[f.featureId] === false) continue;
           if (f.baseline !== "yes" && !(f as any).guarded) {
             // Apply unsupported-threshold to soften advice
-            const threshold = cfg?.unsupportedThreshold;
+            const threshold =
+              typeof opts?.unsupportedThreshold === "number"
+                ? (opts.unsupportedThreshold as number)
+                : cfg?.unsupportedThreshold;
             const advice = ((): string => {
               const a = (f as any).advice as string | undefined;
               if (
@@ -125,6 +161,16 @@ const rule: Rule.RuleModule = {
                 },
               });
             }
+            if (f.featureId === "html-dialog") {
+              suggestions.push({
+                messageId: "suggestDialogFallback",
+                fix(fixer) {
+                  const index = source.getIndexFromLoc(loc.start);
+                  const text = `// Suggestion: consider a dialog polyfill or non-modal fallback; ensure focus trap and Escape closes\n`;
+                  return fixer.insertTextBeforeRange([index, index], text);
+                },
+              });
+            }
             if (f.featureId === "url-canparse") {
               suggestions.push({
                 messageId: "suggestUrlParseFallback",
@@ -141,6 +187,46 @@ const rule: Rule.RuleModule = {
                 fix(fixer) {
                   const index = source.getIndexFromLoc(loc.start);
                   const text = `// Suggestion: if ('startViewTransition' in document) { /* ... */ } else { /* fallback */ }\n`;
+                  return fixer.insertTextBeforeRange([index, index], text);
+                },
+              });
+            }
+            if (f.featureId === "loading-lazy-attr") {
+              suggestions.push({
+                messageId: "suggestLazyEagerForLCP",
+                fix(fixer) {
+                  const index = source.getIndexFromLoc(loc.start);
+                  const text = `// Suggestion: for hero/LCP images, prefer loading=\"eager\"; keep lazy for non-critical media\n`;
+                  return fixer.insertTextBeforeRange([index, index], text);
+                },
+              });
+            }
+            if (f.featureId === "array-prototype-at") {
+              suggestions.push({
+                messageId: "nonBaseline",
+                data: {
+                  title: f.title,
+                  docsUrl: f.docsUrl,
+                  advice: "Needs guard",
+                },
+                fix(fixer) {
+                  const index = source.getIndexFromLoc(loc.start);
+                  const text = `// Suggestion: const getAt = (arr, i) => i >= 0 ? arr[i] : arr[arr.length + i];\n`;
+                  return fixer.insertTextBeforeRange([index, index], text);
+                },
+              });
+            }
+            if (f.featureId === "promise-any") {
+              suggestions.push({
+                messageId: "nonBaseline",
+                data: {
+                  title: f.title,
+                  docsUrl: f.docsUrl,
+                  advice: "Needs guard",
+                },
+                fix(fixer) {
+                  const index = source.getIndexFromLoc(loc.start);
+                  const text = `// Suggestion: const promiseAny = (iters) => new Promise((res, rej) => { let errs=[]; let pending=0; for (const p of iters){ pending++; Promise.resolve(p).then(res, e=>{ errs.push(e); if(--pending===0) rej(new AggregateError(errs));}); } });\n`;
                   return fixer.insertTextBeforeRange([index, index], text);
                 },
               });

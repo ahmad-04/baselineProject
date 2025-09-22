@@ -9,14 +9,24 @@ const MAP: Record<string, string> = {
   "navigator-share": "web-share",
   // Approximate: URL.canParse doesn’t have a direct caniuse slug; use URL API coverage proxy
   "url-canparse": "url",
+  "async-clipboard": "async-clipboard",
+  "import-maps": "import-maps",
   "html-popover": "popover",
+  "css-color-mix": "css-color-function",
+  "css-modal-pseudo": "dialog",
   "css-has": "css-has",
   "css-container-queries": "css-container-queries",
   "css-color-oklch": "css-oklab",
   "css-nesting": "css-nesting",
   "view-transitions": "view-transitions",
   urlpattern: "urlpattern",
+  // New mappings
+  "loading-lazy-attr": "loading-lazy-attr",
+  "css-text-wrap-balance": "css-text-wrap-balance",
+  "html-dialog": "dialog",
 };
+
+const SUPPORT_CACHE = new Map<string, number | undefined>();
 
 function agentsFromTargets(targets: string[]) {
   const list = browserslist(targets);
@@ -71,6 +81,8 @@ export function getSupport(
   featureId: string,
   targets: string[]
 ): number | undefined {
+  const key = `${featureId}::${targets.join("|")}`;
+  if (SUPPORT_CACHE.has(key)) return SUPPORT_CACHE.get(key);
   const slug = MAP[featureId];
   if (!slug) return undefined;
   const data: any = (features as any)?.[slug]
@@ -90,6 +102,11 @@ export function getSupport(
     if (typeof ver === "string" && (ver.includes("y") || ver.includes("a")))
       supported++;
   }
-  if (total === 0) return undefined;
-  return (supported / total) * 100;
+  if (total === 0) {
+    SUPPORT_CACHE.set(key, undefined);
+    return undefined;
+  }
+  const pct = (supported / total) * 100;
+  SUPPORT_CACHE.set(key, pct);
+  return pct;
 }

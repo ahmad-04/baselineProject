@@ -3,17 +3,32 @@
     "targets": [
       ">0.5% and not dead"
     ],
-    "filesScanned": 3,
-    "generatedAt": "2025-09-20T13:25:12.359Z"
+    "filesScanned": 5,
+    "generatedAt": "2025-09-22T06:46:38.741Z",
+    "configPath": "C:\\Github_projects\\baselineProject\\baseline.config.json",
+    "unsupportedThreshold": 10
   },
   "totals": {
-    "total": 8,
-    "nonBaseline": 6,
-    "safe": 2
+    "total": 9,
+    "nonBaseline": 3,
+    "safe": 6
   },
   "findings": [
     {
-      "file": "examples/demo-repo/src/app.ts",
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/baseline-report.html",
+      "line": 111,
+      "column": 48,
+      "featureId": "html-popover",
+      "title": "Popover attribute",
+      "baseline": "partial",
+      "severity": "warn",
+      "docsUrl": "https://developer.mozilla.org/docs/Web/API/Popover_API",
+      "suggestion": "Fallback: use <dialog> or a custom popover component.",
+      "guarded": false,
+      "advice": "needs-guard"
+    },
+    {
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
       "line": 3,
       "column": 29,
       "featureId": "structured-clone",
@@ -21,10 +36,12 @@
       "baseline": "yes",
       "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/API/structuredClone",
-      "suggestion": "Prefer structuredClone over deep-clone utilities; guard if targeting older browsers."
+      "suggestion": "Prefer structuredClone over deep-clone utilities; guard if targeting older browsers.",
+      "guarded": false,
+      "advice": "safe"
     },
     {
-      "file": "examples/demo-repo/src/app.ts",
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
       "line": 4,
       "column": 13,
       "featureId": "structured-clone",
@@ -32,32 +49,40 @@
       "baseline": "yes",
       "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/API/structuredClone",
-      "suggestion": "Prefer structuredClone over deep-clone utilities; guard if targeting older browsers."
+      "suggestion": "Prefer structuredClone over deep-clone utilities; guard if targeting older browsers.",
+      "guarded": false,
+      "advice": "safe"
     },
     {
-      "file": "examples/demo-repo/src/app.ts",
-      "line": 13,
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
+      "line": 12,
       "column": 5,
       "featureId": "navigator-share",
       "title": "Web Share API",
       "baseline": "partial",
-      "severity": "warn",
+      "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
-      "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback }"
+      "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)",
+      "guarded": true,
+      "advice": "guarded",
+      "unsupportedPercent": 18
     },
     {
-      "file": "examples/demo-repo/src/app.ts",
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
       "line": 9,
       "column": 34,
       "featureId": "url-canparse",
       "title": "URL.canParse()",
       "baseline": "partial",
-      "severity": "warn",
+      "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
-      "suggestion": "Fallback: try/catch new URL(...) for validation."
+      "suggestion": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)",
+      "guarded": true,
+      "advice": "guarded",
+      "unsupportedPercent": 0
     },
     {
-      "file": "examples/demo-repo/src/index.html",
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/index.html",
       "line": 9,
       "column": 13,
       "featureId": "html-popover",
@@ -65,32 +90,40 @@
       "baseline": "partial",
       "severity": "warn",
       "docsUrl": "https://developer.mozilla.org/docs/Web/API/Popover_API",
-      "suggestion": "Fallback: use <dialog> or a custom popover component."
+      "suggestion": "Fallback: use <dialog> or a custom popover component.",
+      "guarded": false,
+      "advice": "needs-guard"
     },
     {
-      "file": "examples/demo-repo/src/styles.css",
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css",
       "line": 2,
       "column": 6,
       "featureId": "css-has",
       "title": "CSS :has()",
       "baseline": "partial",
-      "severity": "warn",
+      "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/CSS/:has",
-      "suggestion": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors."
+      "suggestion": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors. (about 6% of your targets may lack support)",
+      "guarded": false,
+      "advice": "safe",
+      "unsupportedPercent": 6
     },
     {
-      "file": "examples/demo-repo/src/styles.css",
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css",
       "line": 6,
       "column": 1,
       "featureId": "css-container-queries",
       "title": "CSS Container Queries",
       "baseline": "partial",
-      "severity": "warn",
+      "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/CSS/CSS_container_queries",
-      "suggestion": "Provide responsive fallbacks using media queries when container queries are unsupported."
+      "suggestion": "Provide responsive fallbacks using media queries when container queries are unsupported. (about 6% of your targets may lack support)",
+      "guarded": false,
+      "advice": "safe",
+      "unsupportedPercent": 6
     },
     {
-      "file": "examples/demo-repo/src/styles.css",
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css",
       "line": 3,
       "column": 21,
       "featureId": "css-color-oklch",
@@ -98,7 +131,9 @@
       "baseline": "partial",
       "severity": "warn",
       "docsUrl": "https://developer.mozilla.org/docs/Web/CSS/color_value/oklch",
-      "suggestion": "Provide fallback colors or color-mix() alternatives when unsupported."
+      "suggestion": "Provide fallback colors or color-mix() alternatives when unsupported.",
+      "guarded": false,
+      "advice": "needs-guard"
     }
   ]
 }

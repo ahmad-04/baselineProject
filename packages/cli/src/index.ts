@@ -104,6 +104,8 @@ function parseArgs(argv: string[]) {
     files: undefined as string[] | undefined,
     unsupportedThreshold: undefined as number | undefined,
     configPath: undefined as string | undefined,
+    cache: false as boolean,
+    cacheFile: ".baseline-scan-cache.json" as string,
   };
   const rest: string[] = [];
   for (let i = 2; i < argv.length; i++) {
@@ -125,6 +127,10 @@ function parseArgs(argv: string[]) {
       if (!Number.isNaN(n)) args.unsupportedThreshold = n;
     } else if (a === "--config") {
       args.configPath = argv[++i];
+    } else if (a === "--cache") {
+      args.cache = true;
+    } else if (a === "--cache-file") {
+      args.cacheFile = argv[++i] || args.cacheFile;
     } else if (!a.startsWith("-")) {
       rest.push(a);
     }
@@ -379,7 +385,26 @@ async function main() {
       absolute: true,
     });
   }
+  // Simple file mtime-based cache
+  type CacheEntry = { mtimeMs: number; result: any[] };
+  type CacheShape = {
+    version: 1;
+    targets: string[] | undefined;
+    byFile: Record<string, CacheEntry>;
+  };
+  let cache: CacheShape | undefined;
+  const cachePath = path.resolve(targetPath, argv.cacheFile);
+  if (argv.cache) {
+    try {
+      const raw = await fs.readFile(cachePath, "utf8");
+      cache = JSON.parse(raw) as CacheShape;
+    } catch {
+      cache = { version: 1, targets: undefined, byFile: {} } as CacheShape;
+    }
+  }
+
   const fileRefs: FileRef[] = [];
+  const perFileFindings: any[] = [];
   for (const p of files) {
     const content = await fs.readFile(p, "utf8");
     fileRefs.push({ path: p, content });
@@ -390,7 +415,50 @@ async function main() {
       ? [cfg?.targets as string]
       : undefined;
   const targets = cfgTargets ?? (await loadTargets(path.resolve(targetPath)));
-  const findings = analyze(fileRefs, { targets });
+  let findings: any[] = [];
+  if (argv.cache && cache) {
+    const updatedCache: CacheShape = {
+      version: 1,
+      targets,
+      byFile: {},
+    } as CacheShape;
+    for (const ref of fileRefs) {
+      try {
+        const stat = await (await import("node:fs/promises")).stat(ref.path);
+        const mtimeMs = stat.mtimeMs;
+        const prev = cache.byFile?.[ref.path.replace(/\\/g, "/")];
+        if (
+          prev &&
+          prev.mtimeMs === mtimeMs &&
+          JSON.stringify(cache.targets) === JSON.stringify(targets)
+        ) {
+          const reused = prev.result.map((f: any) => ({
+            ...f,
+            file: ref.path,
+          }));
+          findings.push(...reused);
+          updatedCache.byFile[ref.path.replace(/\\/g, "/")] = prev;
+          continue;
+        }
+        const res = analyze([{ path: ref.path, content: ref.content }], {
+          targets,
+        });
+        findings.push(...res);
+        updatedCache.byFile[ref.path.replace(/\\/g, "/")] = {
+          mtimeMs,
+          result: res,
+        };
+      } catch {
+        const res = analyze([{ path: ref.path, content: ref.content }], {
+          targets,
+        });
+        findings.push(...res);
+      }
+    }
+    cache = updatedCache;
+  } else {
+    findings = analyze(fileRefs, { targets }) as any[];
+  }
   // Apply unsupported threshold: reclassify needs-guard -> safe if <= threshold
   const threshold =
     argv.unsupportedThreshold != null
@@ -439,6 +507,11 @@ async function main() {
     },
     findings: filtered,
   };
+  if (argv.cache && cache) {
+    try {
+      await fs.writeFile(cachePath, JSON.stringify(cache, null, 2), "utf8");
+    } catch {}
+  }
   if (argv.report) {
     const ext = path.extname(argv.report || "").toLowerCase();
     if (ext === ".html" || ext === ".htm") {

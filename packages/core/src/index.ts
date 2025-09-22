@@ -28,6 +28,7 @@ export interface FileRef {
 }
 
 import { getSupport } from "./targetSupport.js";
+import { tryDetectJsAst } from "./ast.js";
 
 const JS_FEATURES = [
   {
@@ -100,6 +101,15 @@ const JS_FEATURES = [
     baseline: "partial" as BaselineStatus,
     suggestion: "Fallback: try/catch new URL(...) for validation.",
   },
+  {
+    id: "async-clipboard",
+    title: "Async Clipboard API",
+    regex: /navigator\s*\.\s*clipboard\s*\./g,
+    docs: "https://developer.mozilla.org/docs/Web/API/Clipboard_API",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Guard: if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(...) } else { /* fallback */ }",
+  },
 ];
 
 const CSS_FEATURES = [
@@ -113,12 +123,39 @@ const CSS_FEATURES = [
       "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors.",
   },
   {
+    id: "css-text-wrap-balance",
+    title: "CSS text-wrap: balance",
+    regex: /\btext-wrap(?:-style)?\s*:\s*balance\b/gi,
+    docs: "https://developer.mozilla.org/docs/Web/CSS/text-wrap",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Use progressive enhancement; avoid relying on balance for critical layout; provide reasonable default wrapping.",
+  },
+  {
+    id: "css-color-mix",
+    title: "CSS color-mix()",
+    regex: /\bcolor-mix\s*\(/g,
+    docs: "https://developer.mozilla.org/docs/Web/CSS/color_value/color-mix",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Provide fallback colors or precomputed values when color-mix() is unsupported.",
+  },
+  {
     id: "css-nesting",
     title: "CSS Nesting",
     regex: /\n\s*&[\s.:#\[>~+]/g,
     docs: "https://developer.mozilla.org/docs/Web/CSS/CSS_nesting",
     baseline: "partial" as BaselineStatus,
     suggestion: "Use PostCSS Nesting or target supported environments.",
+  },
+  {
+    id: "css-modal-pseudo",
+    title: ":modal pseudo-class",
+    regex: /:modal\b/g,
+    docs: "https://developer.mozilla.org/docs/Web/CSS/:modal",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Guard UI for browsers without <dialog> modal support; provide non-modal fallback.",
   },
   {
     id: "css-container-queries",
@@ -148,6 +185,33 @@ const HTML_FEATURES = [
     docs: "https://developer.mozilla.org/docs/Web/API/Popover_API",
     baseline: "partial" as BaselineStatus,
     suggestion: "Fallback: use <dialog> or a custom popover component.",
+  },
+  {
+    id: "html-dialog",
+    title: "<dialog> element",
+    regex: /<dialog\b/gi,
+    docs: "https://developer.mozilla.org/docs/Web/HTML/Element/dialog",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Provide a dialog polyfill or non-modal fallback when unsupported; ensure accessible focus management.",
+  },
+  {
+    id: "import-maps",
+    title: "Import Maps",
+    regex: /<script[^>]*type=["']importmap(?:-shim)?["'][^>]*>/gi,
+    docs: "https://developer.mozilla.org/docs/Web/HTML/Element/script/type/importmap",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Guard or provide bundler fallback for environments without native import maps.",
+  },
+  {
+    id: "loading-lazy-attr",
+    title: "Lazy loading attribute",
+    regex: /<(img|iframe)\b[^>]*\bloading=["']lazy["']/gi,
+    docs: "https://developer.mozilla.org/docs/Web/HTML/Element/img#attr-loading",
+    baseline: "partial" as BaselineStatus,
+    suggestion:
+      "Use for non-critical images/iframes; set hero media to eager to protect LCP.",
   },
 ];
 
@@ -194,6 +258,18 @@ function pushMatches(
     if (featureId === "file-system-access-picker") {
       // Presence check: if (window.showOpenFilePicker) { ... }
       return /showOpenFilePicker\b/.test(condLine);
+    }
+    if (featureId === "async-clipboard") {
+      // Examples: if (navigator.clipboard?.writeText) { ... }
+      //           if (navigator.clipboard && navigator.clipboard.writeText) { ... }
+      return (
+        /(navigator|window\.?navigator)[^\n{]*\.?\??\s*clipboard\b/.test(
+          condLine
+        ) ||
+        /(navigator|window\.?navigator)[^\n{]*\.?\??\s*clipboard[^\n{]*\.?\??\s*writeText\b/.test(
+          condLine
+        )
+      );
     }
     return false;
   }
@@ -252,7 +328,71 @@ export function analyze(
       lower.endsWith(".jsx") ||
       lower.endsWith(".tsx")
     ) {
-      pushMatches(findings, f.content, f.path, JS_FEATURES);
+      const astFindings = tryDetectJsAst(f.content, f.path);
+      if (astFindings && astFindings.length) {
+        for (const a of astFindings) {
+          const advice: "safe" | "needs-guard" | "guarded" =
+            a.baseline === "yes"
+              ? "safe"
+              : a.guarded
+                ? "guarded"
+                : "needs-guard";
+          findings.push({
+            file: f.path,
+            line: a.line,
+            column: a.column,
+            featureId: a.featureId,
+            title: a.title,
+            baseline: a.baseline,
+            severity:
+              a.baseline === "yes" ? "info" : a.guarded ? "info" : "warn",
+            docsUrl: a.docs,
+            suggestion: a.suggestion,
+            guarded: a.guarded,
+            advice,
+          });
+        }
+      } else {
+        // Fallback to regex if AST fails or finds nothing
+        pushMatches(findings, f.content, f.path, JS_FEATURES);
+        // Additional fallback: detect URLPattern aliases like `const P = URLPattern; new P(...)`
+        try {
+          const aliasRe =
+            /(const|let|var)\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*(?:window\.)?URLPattern\b/g;
+          const used = new Set<string>();
+          let m: RegExpExecArray | null;
+          while ((m = aliasRe.exec(f.content))) {
+            used.add(m[2]);
+          }
+          if (used.size) {
+            for (const name of used) {
+              const useRe = new RegExp("\\bnew\\s+" + name + "\\s*\\(", "g");
+              let um: RegExpExecArray | null;
+              while ((um = useRe.exec(f.content))) {
+                const idx = um.index;
+                const { line, column } = positionFromIndex(f.content, idx);
+                findings.push({
+                  file: f.path,
+                  line,
+                  column,
+                  featureId: "urlpattern",
+                  title: "URLPattern",
+                  baseline: "partial",
+                  severity: "warn",
+                  docsUrl:
+                    "https://developer.mozilla.org/docs/Web/API/URL_Pattern_API",
+                  suggestion:
+                    "Fallback: use the urlpattern-polyfill or Regex-based matching.",
+                  guarded: false,
+                  advice: "needs-guard",
+                });
+              }
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
     } else if (
       lower.endsWith(".css") ||
       lower.endsWith(".scss") ||
