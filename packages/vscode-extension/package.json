@@ -35,6 +35,10 @@
       {
         "command": "baseline.toggleScanMode",
         "title": "Baseline: Toggle Scan Mode (change/save)"
+      },
+      {
+        "command": "baseline.pickTargets",
+        "title": "Baseline: Pick Targets/Threshold"
       }
     ],
     "configuration": {
@@ -67,8 +71,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "@baseline-tools/core": "file:../core",
-    "baseline-demo-repo": "file:../../examples/demo-repo"
+    "@baseline-tools/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

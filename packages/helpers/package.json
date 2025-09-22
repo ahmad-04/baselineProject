@@ -1,14 +1,41 @@
 {
   "name": "@baseline-tools/helpers",
   "version": "0.0.1",
-  "private": true,
+  "private": false,
   "type": "module",
+  "description": "Tiny capability checks for Baseline guards (share, canParse, view transitions, file picker).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ahmad-04/baselineProject.git"
+  },
+  "keywords": [
+    "baseline",
+    "web",
+    "guard",
+    "capability",
+    "share",
+    "url",
+    "view-transitions",
+    "file-picker"
+  ],
   "scripts": {
-    "build": "npx tsc -p tsconfig.json"
+    "build": "npx tsc -p tsconfig.json",
+    "clean": "rimraf dist"
   },
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "rimraf": "^5.0.5"
   }
 }

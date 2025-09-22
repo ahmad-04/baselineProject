@@ -7,7 +7,7 @@ Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Co
 - Core: `@baseline-tools/core` — regex-based detectors for modern web features, advice/guard flags, target-aware hints.
 - CLI: `baseline-scan` — pretty/JSON output, HTML adoption report, diff-only scanning.
 - ESLint: `eslint-plugin-baseline` — rule `baseline/no-nonbaseline` with suggestions, guard‑aware suppression.
-- VS Code: `baseline-guardrails-vscode` — diagnostics, hover, quick fixes, “Scan workspace” command.
+- VS Code: `baseline-guardrails-vscode` — diagnostics, hover, quick fixes, status bar, scan toggle, and Targets/Threshold picker.
 - Action: `@baseline-tools/action` — PR bot summary with code snippets; optional HTML report artifact.
 - SARIF: CLI can emit SARIF 2.1.0 for GitHub Code Scanning.
 
@@ -118,11 +118,35 @@ export default [
 Capabilities:
 
 - Diagnostics for non‑Baseline features (guarded ones suppressed).
-- Hover with suggestion, docs, and current `browserslist` targets.
+- Hover with suggestion, docs, and current targets.
 - Quick fixes insert guard/fallback snippets.
-- Command: `Baseline: Scan Workspace`.
+- Status bar shows counts, targets, and scan mode.
+- Commands: `Baseline: Scan Workspace`, `Baseline: Toggle Scan Mode (change/save)`, `Baseline: Pick Targets/Threshold`.
 
 Run from this repo: use the provided launch config “Run Extension (baseline-guardrails)” and press F5.
+
+### VS Code Settings
+
+- `baseline.scanOnChange`: Scan on every edit (`true`) or only on save (`false`). Togglable via “Baseline: Toggle Scan Mode (change/save)”.
+- `baseline.targets`: Optional override for Browserslist targets used in analysis. When set, takes precedence over `baseline.config.json` and nearest package `browserslist`.
+- `baseline.unsupportedThreshold`: Optional number; when `>= 0`, findings with unsupported% less than or equal to this threshold are treated as Safe in diagnostics.
+
+Status bar shows: count of diagnostics • current targets (or `auto`) • scan mode (`change`/`save`).
+
+### VS Code Usage
+
+1. Open a JS/TS/HTML/CSS file with modern features. Diagnostics appear inline.
+2. Hover a highlighted range to view advice, docs, and targets.
+3. Use Quick Fix to insert a guard/fallback snippet.
+4. Toggle scan mode via Command Palette: “Baseline: Toggle Scan Mode (change/save)”.
+5. Pick targets/threshold via Command Palette: “Baseline: Pick Targets/Threshold”.
+
+Screenshots:
+
+- VS Code diagnostics and status bar: `docs/images/vscode-status.svg`
+- Quick Fix example: `docs/images/vscode-quickfix.svg`
+- HTML report: `docs/images/html-report.svg`
+- Code Scanning alert: `docs/images/code-scanning.svg`
 
 ## Helpers
 
@@ -184,6 +208,7 @@ Create a `baseline.config.json` at the repo root (or pass with `--config`). All 
 
 ```json
 {
+  "$schema": "./docs/schema/baseline.config.schema.json",
   "targets": ">0.5% and not dead",
   "unsupportedThreshold": 5,
   "ignore": ["**/dist/**", "**/node_modules/**"],
@@ -213,6 +238,10 @@ Generate SARIF with the CLI and upload to GitHub Code Scanning:
   with:
     sarif_file: baseline-report.sarif
 ```
+
+## Releasing
+
+See `docs/releasing.md` for the Changesets-based flow (versioning + npm publish) and packaging the VS Code extension (`.vsix`).
 
 ## Testing
 

@@ -394,6 +394,50 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage(
         `Baseline: scan on ${SCAN_ON_CHANGE ? "change" : "save"}`
       );
+    }),
+    vscode.commands.registerCommand("baseline.pickTargets", async () => {
+      const cfg = vscode.workspace.getConfiguration("baseline");
+      const presets: Array<{ label: string; value: string[] }> = [
+        { label: ">0.5% and not dead", value: [">0.5%", "not dead"] },
+        { label: "Defaults (auto)", value: [] },
+        { label: "Chrome >= 120", value: ["chrome >= 120"] },
+        {
+          label: "Firefox ESR + latest",
+          value: ["firefox esr", "last 1 firefox version"],
+        },
+        { label: "Safari 17+", value: ["safari >= 17"] },
+      ];
+      const picked = await vscode.window.showQuickPick(
+        presets.map((p) => p.label),
+        { title: "Baseline Targets", placeHolder: "Select a targets preset" }
+      );
+      if (!picked) return;
+      const preset = presets.find((p) => p.label === picked)!;
+      await cfg.update(
+        "targets",
+        preset.value,
+        vscode.ConfigurationTarget.Workspace
+      );
+      const thr = await vscode.window.showInputBox({
+        title: "Unsupported Threshold (percent, -1 to disable)",
+        value: String(cfg.get<number>("unsupportedThreshold") ?? -1),
+        validateInput: (v) =>
+          /^-?\d+$/.test(v)
+            ? undefined
+            : "Enter an integer (e.g. -1, 0, 5, 10)",
+      });
+      if (thr != null && /^-?\d+$/.test(thr)) {
+        await cfg.update(
+          "unsupportedThreshold",
+          parseInt(thr, 10),
+          vscode.ConfigurationTarget.Workspace
+        );
+      }
+      const ed = vscode.window.activeTextEditor;
+      if (ed?.document) computeDiagnostics(ed.document);
+      vscode.window.showInformationMessage(
+        "Baseline: targets/threshold updated."
+      );
     })
   );
   // Initial scan for currently open docs

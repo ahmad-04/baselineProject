@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">HTML Report Placeholder</title>
+  <desc id="desc">Placeholder image of the Baseline HTML adoption report with filters and grouping.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#bg)"/>
+  <rect x="40" y="40" width="1120" height="720" rx="10" fill="#1f2937" stroke="#374151"/>
+  <text x="70" y="90" fill="#e5e7eb" font-family="Segoe UI, system-ui, sans-serif" font-size="24" font-weight="700">Baseline Adoption Report</text>
+  <g>
+    <rect x="60" y="110" width="1080" height="56" fill="#111827"/>
+    <text x="80" y="145" fill="#93c5fd" font-family="Segoe UI, system-ui, sans-serif" font-size="16">Filter: Advice ▾ • Feature ▾ • File ▾ • Group: Advice</text>
+  </g>
+  <g>
+    <rect x="60" y="190" width="1080" height="60" fill="#0b5fff"/>
+    <text x="80" y="227" fill="#ffffff" font-family="Segoe UI, system-ui, sans-serif" font-size="18" font-weight="600">Targets: >0.5% and not dead • Guarded counts as safe</text>
+  </g>
+  <g>
+    <rect x="60" y="270" width="1080" height="420" fill="#111827"/>
+    <text x="80" y="305" fill="#a7f3d0" font-family="Consolas, monospace" font-size="16">navigator.share → Needs guard (≤ 5% unsupported)</text>
+    <text x="80" y="335" fill="#fde68a" font-family="Consolas, monospace" font-size="16">URL.canParse → Guarded (safe)</text>
+    <text x="80" y="365" fill="#93c5fd" font-family="Consolas, monospace" font-size="16">View transitions → Guarded (safe)</text>
+    <text x="80" y="395" fill="#fca5a5" font-family="Consolas, monospace" font-size="16">:has() → Needs guard</text>
+    <text x="80" y="425" fill="#bbf7d0" font-family="Consolas, monospace" font-size="16">Loading="lazy" → Safe to adopt</text>
+  </g>
+</svg>
