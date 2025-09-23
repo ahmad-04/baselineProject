@@ -1,0 +1,22 @@
+{
+  "name": "@baseline-tools/core",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc -p tsconfig.json",
+    "test": "node --test test/**/*.js",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@typescript-eslint/typescript-estree": "^7.18.0",
+    "browserslist": "^4.23.0",
+    "caniuse-lite": "^1.0.30001600",
+    "web-features": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "rimraf": "^5.0.5"
+  }
+}
