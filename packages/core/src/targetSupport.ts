@@ -3,28 +3,13 @@ import browserslist from "browserslist";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { features, feature } from "caniuse-lite/dist/unpacker/index.js";
+import { FEATURE_DATA } from "./featureData.js";
+import { features as wfFeatures } from "web-features";
 
 // Minimal mapping from our featureIds to caniuse slugs
-const MAP: Record<string, string> = {
-  "navigator-share": "web-share",
-  // Approximate: URL.canParse doesn’t have a direct caniuse slug; use URL API coverage proxy
-  "url-canparse": "url",
-  "async-clipboard": "async-clipboard",
-  "import-maps": "import-maps",
-  "html-popover": "popover",
-  "css-color-mix": "css-color-function",
-  "css-modal-pseudo": "dialog",
-  "css-has": "css-has",
-  "css-container-queries": "css-container-queries",
-  "css-color-oklch": "css-oklab",
-  "css-nesting": "css-nesting",
-  "view-transitions": "view-transitions",
-  urlpattern: "urlpattern",
-  // New mappings
-  "loading-lazy-attr": "loading-lazy-attr",
-  "css-text-wrap-balance": "css-text-wrap-balance",
-  "html-dialog": "dialog",
-};
+function getCaniuseSlug(featureId: string): string | undefined {
+  return FEATURE_DATA[featureId]?.caniuseSlug;
+}
 
 const SUPPORT_CACHE = new Map<string, number | undefined>();
 
@@ -83,7 +68,46 @@ export function getSupport(
 ): number | undefined {
   const key = `${featureId}::${targets.join("|")}`;
   if (SUPPORT_CACHE.has(key)) return SUPPORT_CACHE.get(key);
-  const slug = MAP[featureId];
+  // Try MDN/web-features first: map feature to caniuse slug and locate matching entry
+  const slug = getCaniuseSlug(featureId);
+  let mdnSupport: Record<string, string> | undefined;
+  if (slug) {
+    for (const k of Object.keys(wfFeatures)) {
+      const f: any = (wfFeatures as any)[k];
+      const ci = f?.caniuse;
+      const matches = Array.isArray(ci) ? ci.includes(slug) : ci === slug;
+      if (matches && f?.status?.support) {
+        mdnSupport = f.status.support as Record<string, string>;
+        break;
+      }
+    }
+  }
+  if (mdnSupport) {
+    const agents = agentsFromTargets(targets);
+    let supported = 0;
+    let total = 0;
+    for (const a of agents) {
+      const key =
+        a.name === "chrome_android"
+          ? "chrome_android"
+          : a.name === "firefox_android"
+            ? "firefox_android"
+            : a.name;
+      const minVer = mdnSupport[key];
+      if (!minVer) continue;
+      const vNum = normalizeVersion(a.version);
+      const minNum = normalizeVersion(minVer);
+      if (vNum === undefined || minNum === undefined) continue;
+      total++;
+      if (vNum >= minNum) supported++;
+    }
+    if (total > 0) {
+      const pct = (supported / total) * 100;
+      SUPPORT_CACHE.set(key, pct);
+      return pct;
+    }
+  }
+  // Fallback to caniuse-lite
   if (!slug) return undefined;
   const data: any = (features as any)?.[slug]
     ? feature((features as any)[slug])

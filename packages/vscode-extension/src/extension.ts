@@ -1,11 +1,137 @@
 import * as vscode from "vscode";
 import { analyze, type FileRef } from "@baseline-tools/core";
+import { spawn, ChildProcessWithoutNullStreams } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
 const DIAG_COLLECTION = vscode.languages.createDiagnosticCollection("baseline");
 let STATUS_ITEM: vscode.StatusBarItem | undefined;
 let SCAN_ON_CHANGE = true;
+let USE_LSP = false;
+let LSP_PROC: ChildProcessWithoutNullStreams | undefined;
+const DEBOUNCE_TIMERS = new Map<string, NodeJS.Timeout>();
+const PENDING_TOKENS = new Map<string, string>();
+const APPLIED_TOKENS = new Map<string, string>();
+
+function lspAvailable(): boolean {
+  try {
+    const extRoot = contextGlobal?.extensionPath || __dirname;
+    // The lsp server entry after build
+    const serverPath = path.resolve(
+      extRoot,
+      "../../packages/lsp-server/dist/server.js"
+    );
+    return fs.existsSync(serverPath);
+  } catch {
+    return false;
+  }
+}
+
+let contextGlobal: vscode.ExtensionContext | undefined;
+
+function startLspIfEnabled(context: vscode.ExtensionContext) {
+  contextGlobal = context;
+  try {
+    const cfg = vscode.workspace.getConfiguration("baseline");
+    USE_LSP = !!cfg.get<boolean>("useLsp");
+  } catch {}
+  if (!USE_LSP) return;
+  const extRoot = context.extensionPath;
+  const serverPath = path.resolve(
+    extRoot,
+    "../../packages/lsp-server/dist/server.js"
+  );
+  if (!fs.existsSync(serverPath)) {
+    USE_LSP = false;
+    return;
+  }
+  try {
+    LSP_PROC = spawn(process.execPath, [serverPath], {
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    LSP_PROC.on("exit", () => {
+      USE_LSP = false;
+      LSP_PROC = undefined;
+    });
+  } catch {
+    USE_LSP = false;
+  }
+}
+
+function lspAnalyzeText(
+  uri: string,
+  text: string,
+  targets?: string[]
+): Promise<{ findings: any[]; id: string } | undefined> {
+  if (!LSP_PROC) return Promise.resolve(undefined);
+  const id = Math.random().toString(36).slice(2);
+  const req = {
+    jsonrpc: "2.0",
+    id,
+    method: "baseline/analyzeText",
+    params: { uri, text, targets },
+  };
+  const s = JSON.stringify(req);
+  const buf = Buffer.from(s, "utf8");
+  return new Promise((resolve) => {
+    const onData = (chunk: Buffer) => {
+      const str = chunk.toString("utf8");
+      const idx = str.indexOf("\r\n\r\n");
+      const body = idx >= 0 ? str.slice(idx + 4) : str;
+      try {
+        const rsp = JSON.parse(body);
+        if (rsp && rsp.id === id) {
+          LSP_PROC!.stdout.off("data", onData);
+          resolve({ findings: rsp.result?.findings ?? [], id });
+        }
+      } catch {
+        // ignore
+      }
+    };
+    LSP_PROC!.stdout.on("data", onData);
+    LSP_PROC!.stdin.write(`Content-Length: ${buf.length}\r\n\r\n`);
+    LSP_PROC!.stdin.write(buf);
+  });
+}
+
+function lspFixAll(
+  uri: string,
+  text: string,
+  languageId: string,
+  targets?: string[]
+): Promise<
+  Array<{ line: number; column: number; insertText: string }> | undefined
+> {
+  if (!LSP_PROC) return Promise.resolve(undefined);
+  const id = Math.random().toString(36).slice(2);
+  const req = {
+    jsonrpc: "2.0",
+    id,
+    method: "baseline/fixAll",
+    params: { uri, text, language: languageId, targets },
+  };
+  const s = JSON.stringify(req);
+  const buf = Buffer.from(s, "utf8");
+  return new Promise((resolve) => {
+    const onData = (chunk: Buffer) => {
+      const str = chunk.toString("utf8");
+      const idx = str.indexOf("\r\n\r\n");
+      const body = idx >= 0 ? str.slice(idx + 4) : str;
+      try {
+        const rsp = JSON.parse(body);
+        if (rsp && rsp.id === id) {
+          LSP_PROC!.stdout.off("data", onData);
+          resolve((rsp.result?.edits as any[]) ?? []);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    LSP_PROC!.stdout.on("data", onData);
+    LSP_PROC!.stdin.write(`Content-Length: ${buf.length}\r\n\r\n`);
+    LSP_PROC!.stdin.write(buf);
+  });
+}
 
 function getVsCodeSettings() {
   try {
@@ -127,55 +253,95 @@ function computeDiagnostics(doc: vscode.TextDocument) {
   const cfg = loadConfig(doc);
   const vs = getVsCodeSettings();
   const targets = loadTargetsFromWorkspace(doc);
-  const findings = analyze([fileRef], { targets });
-  const diags: vscode.Diagnostic[] = [];
-  for (const f of findings) {
-    if (cfg?.features && cfg.features[f.featureId] === false) continue;
-    if (f.baseline === "yes") continue;
-    if ((f as any).advice === "guarded") continue; // don't warn when already guarded
-    const threshold =
-      typeof vs.unsupportedThreshold === "number" &&
-      vs.unsupportedThreshold >= 0
-        ? vs.unsupportedThreshold
-        : cfg?.unsupportedThreshold;
-    const effAdvice = (() => {
-      const a = (f as any).advice as string | undefined;
+  const doSet = (findings: any[]) => {
+    const diags: vscode.Diagnostic[] = [];
+    for (const f of findings) {
+      if (cfg?.features && cfg.features[f.featureId] === false) continue;
+      if (f.baseline === "yes") continue;
+      if ((f as any).advice === "guarded") continue;
+      const threshold =
+        typeof vs.unsupportedThreshold === "number" &&
+        vs.unsupportedThreshold >= 0
+          ? vs.unsupportedThreshold
+          : cfg?.unsupportedThreshold;
+      const effAdvice = (() => {
+        const a = (f as any).advice as string | undefined;
+        if (
+          typeof threshold === "number" &&
+          a === "needs-guard" &&
+          typeof (f as any).unsupportedPercent === "number" &&
+          (f as any).unsupportedPercent <= threshold
+        )
+          return "safe";
+        return a || "needs-guard";
+      })();
+      const range = toRange(doc, f.line, f.column);
+      const msgAdvice =
+        effAdvice === "guarded"
+          ? "Guarded"
+          : effAdvice === "safe"
+            ? "Safe to adopt"
+            : "Needs guard";
+      const diag = new vscode.Diagnostic(
+        range,
+        `${f.title} — ${msgAdvice}`,
+        vscode.DiagnosticSeverity.Warning
+      );
+      diag.code = f.featureId;
+      diag.source = "Baseline";
+      if (f.docsUrl) {
+        (diag as any).docsUrl = f.docsUrl;
+      }
+      if (f.suggestion) {
+        (diag as any).suggestion = f.suggestion;
+      }
+      if ((f as any).unsupportedPercent != null) {
+        (diag as any).unsupportedPercent = (f as any).unsupportedPercent;
+      }
+      diags.push(diag);
+    }
+    DIAG_COLLECTION.set(doc.uri, diags);
+    updateStatusBar(doc);
+  };
+  if (USE_LSP && LSP_PROC) {
+    const docPath = doc.uri.fsPath;
+    const token = Math.random().toString(36).slice(2);
+    PENDING_TOKENS.set(docPath, token);
+    setTimeout(() => {
       if (
-        typeof threshold === "number" &&
-        a === "needs-guard" &&
-        typeof (f as any).unsupportedPercent === "number" &&
-        (f as any).unsupportedPercent <= threshold
-      )
-        return "safe";
-      return a || "needs-guard";
-    })();
-    const range = toRange(doc, f.line, f.column);
-    const msgAdvice =
-      effAdvice === "guarded"
-        ? "Guarded"
-        : effAdvice === "safe"
-          ? "Safe to adopt"
-          : "Needs guard";
-    const diag = new vscode.Diagnostic(
-      range,
-      `${f.title} — ${msgAdvice}`,
-      vscode.DiagnosticSeverity.Warning
-    );
-    diag.code = f.featureId;
-    diag.source = "Baseline";
-    if (f.docsUrl) {
-      (diag as any).docsUrl = f.docsUrl;
-    }
-    if (f.suggestion) {
-      (diag as any).suggestion = f.suggestion;
-    }
-    if ((f as any).unsupportedPercent != null) {
-      (diag as any).unsupportedPercent = (f as any).unsupportedPercent;
-    }
-    diags.push(diag);
+        PENDING_TOKENS.get(docPath) === token &&
+        APPLIED_TOKENS.get(docPath) !== token
+      ) {
+        const localFindings = analyze([fileRef], { targets });
+        doSet(localFindings);
+        APPLIED_TOKENS.set(docPath, token);
+      }
+    }, 300);
+    lspAnalyzeText(doc.uri.fsPath, fileRef.content, targets).then((res) => {
+      if (!res) {
+        if (PENDING_TOKENS.get(docPath) === token) {
+          const localFindings = analyze([fileRef], { targets });
+          doSet(localFindings);
+          APPLIED_TOKENS.set(docPath, token);
+        }
+        return;
+      }
+      if (PENDING_TOKENS.get(docPath) !== token) return;
+      doSet(res.findings);
+      APPLIED_TOKENS.set(docPath, token);
+    });
+  } else {
+    const findings = analyze([fileRef], { targets });
+    doSet(findings);
   }
-  DIAG_COLLECTION.set(doc.uri, diags);
-  updateStatusBar(doc);
+}
+
+function scheduleDiagnostics(doc: vscode.TextDocument, delay = 200) {
+  const key = doc.uri.toString();
+  const t = DEBOUNCE_TIMERS.get(key);
+  if (t) clearTimeout(t);
+  const h = setTimeout(() => computeDiagnostics(doc), delay);
+  DEBOUNCE_TIMERS.set(key, h);
 }
 
 class HoverProvider implements vscode.HoverProvider {
@@ -201,7 +367,10 @@ class HoverProvider implements vscode.HoverProvider {
 }
 
 class CodeActionProvider implements vscode.CodeActionProvider {
-  static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
+  static readonly providedCodeActionKinds = [
+    vscode.CodeActionKind.QuickFix,
+    vscode.CodeActionKind.SourceFixAll,
+  ];
   private snippetFor(
     featureId:
       | string
@@ -253,6 +422,17 @@ class CodeActionProvider implements vscode.CodeActionProvider {
   }
   provideCodeActions(doc: vscode.TextDocument, range: vscode.Range) {
     const actions: vscode.CodeAction[] = [];
+    // Provide a source action to fix all in the file
+    const fixAll = new vscode.CodeAction(
+      "Baseline: Fix all in file",
+      vscode.CodeActionKind.SourceFixAll
+    );
+    fixAll.command = {
+      command: "baseline.fixAll",
+      title: "Baseline: Fix all in file",
+      arguments: [doc.uri],
+    };
+    actions.push(fixAll);
     const sel = range
       ? new vscode.Selection(range.start, range.end)
       : undefined;
@@ -296,6 +476,7 @@ class CodeActionProvider implements vscode.CodeActionProvider {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  startLspIfEnabled(context);
   // Load persisted or configured scan mode
   try {
     const cfg = vscode.workspace.getConfiguration("baseline");
@@ -325,11 +506,11 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidOpenTextDocument(computeDiagnostics),
     vscode.workspace.onDidChangeTextDocument(
       (e: vscode.TextDocumentChangeEvent) => {
-        if (SCAN_ON_CHANGE) computeDiagnostics(e.document);
+        if (SCAN_ON_CHANGE) scheduleDiagnostics(e.document, 200);
       }
     ),
     vscode.workspace.onDidSaveTextDocument((doc: vscode.TextDocument) => {
-      if (!SCAN_ON_CHANGE) computeDiagnostics(doc);
+      if (!SCAN_ON_CHANGE) scheduleDiagnostics(doc, 0);
     }),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (
@@ -385,6 +566,93 @@ export function activate(context: vscode.ExtensionContext) {
       for (const doc of docs) computeDiagnostics(doc);
       vscode.window.showInformationMessage("Baseline scan complete.");
     }),
+    vscode.commands.registerCommand("baseline.restartLsp", async () => {
+      if (LSP_PROC) {
+        try {
+          LSP_PROC.kill();
+        } catch {}
+        LSP_PROC = undefined;
+      }
+      startLspIfEnabled(context);
+      vscode.window.showInformationMessage(
+        USE_LSP
+          ? "Baseline LSP restarted."
+          : "Baseline LSP not enabled or unavailable."
+      );
+      const ed = vscode.window.activeTextEditor;
+      if (ed?.document) computeDiagnostics(ed.document);
+    }),
+    vscode.commands.registerCommand(
+      "baseline.fixAll",
+      async (uri?: vscode.Uri) => {
+        try {
+          const doc = uri
+            ? await vscode.workspace.openTextDocument(uri)
+            : vscode.window.activeTextEditor?.document;
+          if (!doc) return;
+          const fileRef = fileToFileRef(doc);
+          if (!fileRef) return;
+          const targets = loadTargetsFromWorkspace(doc);
+          let edits:
+            | Array<{ line: number; column: number; insertText: string }>
+            | undefined;
+          if (USE_LSP && LSP_PROC) {
+            edits = await lspFixAll(
+              doc.uri.fsPath,
+              fileRef.content,
+              doc.languageId,
+              targets
+            );
+          }
+          if (!edits) {
+            const findings = analyze([fileRef], { targets }) as any[];
+            const wrap = (body: string) => {
+              const lang = doc.languageId;
+              if (lang === "html") return `<!-- ${body} -->`;
+              if (lang === "css") return `/* ${body} */`;
+              return `// ${body}`;
+            };
+            edits = findings
+              .filter(
+                (f) => (f as any).advice !== "guarded" && f.baseline !== "yes"
+              )
+              .map((f) => {
+                const s = (f as any).suggestion as string | undefined;
+                const body = s
+                  ? `Suggestion: ${s}`
+                  : f.docsUrl
+                    ? `See docs: ${f.docsUrl}`
+                    : `Consider guards or a fallback`;
+                return {
+                  line: f.line,
+                  column: f.column,
+                  insertText: wrap(body) + "\n",
+                };
+              });
+          }
+          if (edits && edits.length) {
+            const we = new vscode.WorkspaceEdit();
+            for (const e of edits) {
+              const pos = new vscode.Position(
+                Math.max(0, e.line - 1),
+                Math.max(0, e.column - 1)
+              );
+              we.insert(doc.uri, pos, e.insertText);
+            }
+            await vscode.workspace.applyEdit(we);
+            vscode.window.showInformationMessage(
+              `Baseline: applied ${edits.length} suggestions.`
+            );
+          } else {
+            vscode.window.showInformationMessage(
+              "Baseline: no suggestions to apply."
+            );
+          }
+        } catch (err) {
+          vscode.window.showErrorMessage(`Baseline fix-all failed: ${err}`);
+        }
+      }
+    ),
     vscode.commands.registerCommand("baseline.toggleScanMode", async () => {
       SCAN_ON_CHANGE = !SCAN_ON_CHANGE;
       await context.workspaceState.update(
@@ -458,5 +726,6 @@ function updateStatusBar(doc: vscode.TextDocument) {
   const targets = loadTargetsFromWorkspace(doc);
   const tgt = targets && targets.length ? `${targets.join(", ")}` : "auto";
   const mode = SCAN_ON_CHANGE ? "change" : "save";
-  STATUS_ITEM.text = `$(shield) Baseline: ${count} • ${tgt} • ${mode}`;
+  const lsp = USE_LSP ? "lsp" : "local";
+  STATUS_ITEM.text = `$(shield) Baseline: ${count} • ${tgt} • ${mode} • ${lsp}`;
 }

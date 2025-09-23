@@ -71,7 +71,7 @@
                 "text": "CSS :has()"
               },
               "fullDescription": {
-                "text": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors. (about 6% of your targets may lack support)"
+                "text": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors."
               },
               "properties": {
                 "baseline": "partial"
@@ -85,7 +85,7 @@
                 "text": "CSS Container Queries"
               },
               "fullDescription": {
-                "text": "Provide responsive fallbacks using media queries when container queries are unsupported. (about 6% of your targets may lack support)"
+                "text": "Provide responsive fallbacks using media queries when container queries are unsupported."
               },
               "properties": {
                 "baseline": "partial"
@@ -231,9 +231,9 @@
         },
         {
           "ruleId": "css-has",
-          "level": "warning",
+          "level": "note",
           "message": {
-            "text": "CSS :has() — needs-guard"
+            "text": "CSS :has() — safe"
           },
           "locations": [
             {
@@ -251,9 +251,9 @@
         },
         {
           "ruleId": "css-container-queries",
-          "level": "warning",
+          "level": "note",
           "message": {
-            "text": "CSS Container Queries — needs-guard"
+            "text": "CSS Container Queries — safe"
           },
           "locations": [
             {

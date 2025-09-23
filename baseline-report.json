@@ -4,7 +4,7 @@
       ">0.5% and not dead"
     ],
     "filesScanned": 5,
-    "generatedAt": "2025-09-22T14:23:21.397Z",
+    "generatedAt": "2025-09-22T15:56:56.403Z",
     "configPath": "C:\\Github_projects\\baselineProject\\baseline.config.json",
     "unsupportedThreshold": 10
   },
@@ -103,10 +103,9 @@
       "baseline": "partial",
       "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/CSS/:has",
-      "suggestion": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors. (about 6% of your targets may lack support)",
+      "suggestion": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors.",
       "guarded": false,
-      "advice": "safe",
-      "unsupportedPercent": 6
+      "advice": "safe"
     },
     {
       "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css",
@@ -117,10 +116,9 @@
       "baseline": "partial",
       "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/CSS/CSS_container_queries",
-      "suggestion": "Provide responsive fallbacks using media queries when container queries are unsupported. (about 6% of your targets may lack support)",
+      "suggestion": "Provide responsive fallbacks using media queries when container queries are unsupported.",
       "guarded": false,
-      "advice": "safe",
-      "unsupportedPercent": 6
+      "advice": "safe"
     },
     {
       "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css",

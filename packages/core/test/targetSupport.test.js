@@ -13,3 +13,9 @@ test("getSupport returns a number for navigator-share", () => {
   assert.equal(typeof pct, "number");
   assert.ok(pct >= 0 && pct <= 100);
 });
+
+test("getSupport (mdn) returns a number for container queries", () => {
+  const pct = getSupport("css-container-queries", [">0.5% and not dead"]);
+  assert.equal(typeof pct, "number");
+  assert.ok(pct >= 0 && pct <= 100);
+});

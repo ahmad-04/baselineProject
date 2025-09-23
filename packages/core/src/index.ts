@@ -28,6 +28,7 @@ export interface FileRef {
 }
 
 import { getSupport } from "./targetSupport.js";
+import { isBaselineFeature } from "./baselineStatus.js";
 import { tryDetectJsAst } from "./ast.js";
 
 const JS_FEATURES = [
@@ -280,8 +281,10 @@ function pushMatches(
       const idx = m.index;
       const { line, column } = positionFromIndex(content, idx);
       const guarded = isGuarded(it.id, idx);
-      const advice: "safe" | "needs-guard" | "guarded" =
+      let advice: "safe" | "needs-guard" | "guarded" =
         it.baseline === "yes" ? "safe" : guarded ? "guarded" : "needs-guard";
+      const baselineFlag = isBaselineFeature(it.id);
+      if (baselineFlag === true && advice !== "guarded") advice = "safe";
       arr.push({
         file,
         line,
@@ -289,7 +292,7 @@ function pushMatches(
         featureId: it.id,
         title: it.title,
         baseline: it.baseline,
-        severity: it.baseline === "yes" ? "info" : guarded ? "info" : "warn",
+        severity: advice === "needs-guard" ? "warn" : "info",
         docsUrl: it.docs,
         suggestion: it.suggestion,
         guarded,
@@ -331,12 +334,14 @@ export function analyze(
       const astFindings = tryDetectJsAst(f.content, f.path);
       if (astFindings && astFindings.length) {
         for (const a of astFindings) {
-          const advice: "safe" | "needs-guard" | "guarded" =
+          let advice: "safe" | "needs-guard" | "guarded" =
             a.baseline === "yes"
               ? "safe"
               : a.guarded
                 ? "guarded"
                 : "needs-guard";
+          const baselineFlag = isBaselineFeature(a.featureId);
+          if (baselineFlag === true && advice !== "guarded") advice = "safe";
           findings.push({
             file: f.path,
             line: a.line,
@@ -344,8 +349,7 @@ export function analyze(
             featureId: a.featureId,
             title: a.title,
             baseline: a.baseline,
-            severity:
-              a.baseline === "yes" ? "info" : a.guarded ? "info" : "warn",
+            severity: advice === "needs-guard" ? "warn" : "info",
             docsUrl: a.docs,
             suggestion: a.suggestion,
             guarded: a.guarded,
@@ -371,6 +375,9 @@ export function analyze(
               while ((um = useRe.exec(f.content))) {
                 const idx = um.index;
                 const { line, column } = positionFromIndex(f.content, idx);
+                let advice: "safe" | "needs-guard" | "guarded" = "needs-guard";
+                const baselineFlag = isBaselineFeature("urlpattern");
+                if (baselineFlag === true) advice = "safe";
                 findings.push({
                   file: f.path,
                   line,
@@ -378,13 +385,13 @@ export function analyze(
                   featureId: "urlpattern",
                   title: "URLPattern",
                   baseline: "partial",
-                  severity: "warn",
+                  severity: advice === "safe" ? "info" : "warn",
                   docsUrl:
                     "https://developer.mozilla.org/docs/Web/API/URL_Pattern_API",
                   suggestion:
                     "Fallback: use the urlpattern-polyfill or Regex-based matching.",
                   guarded: false,
-                  advice: "needs-guard",
+                  advice,
                 });
               }
             }

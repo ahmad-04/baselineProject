@@ -120,8 +120,8 @@ Capabilities:
 - Diagnostics for non‑Baseline features (guarded ones suppressed).
 - Hover with suggestion, docs, and current targets.
 - Quick fixes insert guard/fallback snippets.
-- Status bar shows counts, targets, and scan mode.
-- Commands: `Baseline: Scan Workspace`, `Baseline: Toggle Scan Mode (change/save)`, `Baseline: Pick Targets/Threshold`.
+- Status bar shows counts, targets, scan mode, and analysis mode (lsp/local).
+- Commands: `Baseline: Scan Workspace`, `Baseline: Toggle Scan Mode (change/save)`, `Baseline: Pick Targets/Threshold`, `Baseline: Fix all in file`, `Baseline: Restart LSP (experimental)`.
 
 Run from this repo: use the provided launch config “Run Extension (baseline-guardrails)” and press F5.
 
@@ -130,16 +130,18 @@ Run from this repo: use the provided launch config “Run Extension (baseline-gu
 - `baseline.scanOnChange`: Scan on every edit (`true`) or only on save (`false`). Togglable via “Baseline: Toggle Scan Mode (change/save)”.
 - `baseline.targets`: Optional override for Browserslist targets used in analysis. When set, takes precedence over `baseline.config.json` and nearest package `browserslist`.
 - `baseline.unsupportedThreshold`: Optional number; when `>= 0`, findings with unsupported% less than or equal to this threshold are treated as Safe in diagnostics.
+- `baseline.useLsp` (experimental): Use the bundled stdio LSP server for analysis. The extension debounces per-document requests and falls back to local analysis if the server is unavailable or slow. You can restart via the `Baseline: Restart LSP (experimental)` command.
 
-Status bar shows: count of diagnostics • current targets (or `auto`) • scan mode (`change`/`save`).
+Status bar shows: count of diagnostics • current targets (or `auto`) • scan mode (`change`/`save`) • analysis mode (`lsp`/`local`).
 
 ### VS Code Usage
 
 1. Open a JS/TS/HTML/CSS file with modern features. Diagnostics appear inline.
 2. Hover a highlighted range to view advice, docs, and targets.
-3. Use Quick Fix to insert a guard/fallback snippet.
+3. Use Quick Fix to insert a guard/fallback snippet, or run `Baseline: Fix all in file` to insert suggestions for all findings.
 4. Toggle scan mode via Command Palette: “Baseline: Toggle Scan Mode (change/save)”.
 5. Pick targets/threshold via Command Palette: “Baseline: Pick Targets/Threshold”.
+6. (Optional) Enable LSP mode in Settings (`baseline.useLsp`) and use “Baseline: Restart LSP (experimental)” if you update or restart the server.
 
 Screenshots:
 
