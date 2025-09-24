@@ -382,35 +382,296 @@ class CodeActionProvider implements vscode.CodeActionProvider {
   ): string | undefined {
     const id = typeof featureId === "string" ? featureId : String(featureId);
     const wrap = (body: string) => this.wrapAsComment(doc, body);
+    const lang = doc.languageId;
+
     switch (id) {
       case "navigator-share":
-        return `if (navigator.share) {\n  await navigator.share({ title: document.title, url: location.href });\n} else {\n  // TODO: fallback\n}`;
+        return `if (navigator && 'share' in navigator) {
+  await navigator.share({ 
+    title: document.title, 
+    url: location.href 
+  });
+} else {
+  // Fallback: implement sharing via another method
+  console.log('Web Share API not supported');
+  // For example: show a custom share dialog with copy to clipboard
+}`;
       case "url-canparse":
-        return `function canParse(u){ try { new URL(u); return true; } catch { return false; } }`;
+        return `function canParseUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}`;
       case "view-transitions":
-        return `if ('startViewTransition' in document) {\n  // document.startViewTransition(() => { /* ... */ })\n} else {\n  // fallback\n}`;
+        return `if (document && 'startViewTransition' in document) {
+  document.startViewTransition(() => {
+    // Your view transition code here
+    // Update DOM elements that need transition effects
+  });
+} else {
+  // Fallback for browsers without View Transitions API
+  // Directly apply changes without animation
+  // Example: document.getElementById('content').innerHTML = newContent;
+}`;
       case "file-system-access-picker":
-        return `// Fallback: <input type=\"file\"> for older browsers\nconst input = document.createElement('input');\ninput.type = 'file';\ninput.click();`;
+        return `async function openFile() {
+  if ('showOpenFilePicker' in window) {
+    try {
+      const [fileHandle] = await window.showOpenFilePicker();
+      return await fileHandle.getFile();
+    } catch (err) {
+      console.error('File system access error:', err);
+    }
+  } else {
+    // Fallback for browsers without File System Access API
+    const input = document.createElement('input');
+    input.type = 'file';
+    return new Promise(resolve => {
+      input.onchange = () => resolve(input.files[0]);
+      input.click();
+    });
+  }
+}`;
       case "urlpattern":
-        return `// Consider urlpattern-polyfill or regex-based matching\n// import 'urlpattern-polyfill';\n// const p = new URLPattern('https://example.com/:id');`;
+        return `// URLPattern API with polyfill fallback
+function matchPattern(pattern, url) {
+  if (typeof URLPattern === 'function') {
+    return new URLPattern(pattern).test(url);
+  } else {
+    // Consider using urlpattern-polyfill:
+    // import 'urlpattern-polyfill';
+    
+    // Or use a simple regex-based fallback:
+    const regexStr = pattern.replace(/:\\w+/g, '([^/]+)');
+    const regex = new RegExp(regexStr);
+    return regex.test(url);
+  }
+}`;
       case "html-dialog":
+        if (lang === "html") {
+          return `<!-- Dialog with fallback -->
+<dialog id="myDialog" class="modal">
+  <form method="dialog">
+    <h2>Dialog Title</h2>
+    <p>Dialog content here</p>
+    <button id="closeDialog">Close</button>
+  </form>
+</dialog>
+
+<script>
+  const dialog = document.getElementById('myDialog');
+  const closeBtn = document.getElementById('closeDialog');
+  
+  // Show dialog with fallback
+  function showDialog() {
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      // Fallback for browsers without dialog support
+      dialog.setAttribute('open', '');
+      dialog.style.position = 'fixed';
+      dialog.style.top = '50%';
+      dialog.style.left = '50%';
+      dialog.style.transform = 'translate(-50%, -50%)';
+      dialog.style.zIndex = '100';
+      dialog.style.display = 'block';
+      
+      // Add backdrop
+      const backdrop = document.createElement('div');
+      backdrop.id = 'dialog-backdrop';
+      backdrop.style.position = 'fixed';
+      backdrop.style.top = '0';
+      backdrop.style.left = '0';
+      backdrop.style.right = '0';
+      backdrop.style.bottom = '0';
+      backdrop.style.backgroundColor = 'rgba(0,0,0,0.5)';
+      backdrop.style.zIndex = '99';
+      document.body.appendChild(backdrop);
+      
+      // Focus management
+      dialog.focus();
+    }
+  }
+  
+  // Close dialog with fallback
+  function closeDialog() {
+    if (typeof dialog.close === 'function') {
+      dialog.close();
+    } else {
+      dialog.removeAttribute('open');
+      dialog.style.display = 'none';
+      const backdrop = document.getElementById('dialog-backdrop');
+      if (backdrop) backdrop.remove();
+    }
+  }
+  
+  closeBtn.addEventListener('click', closeDialog);
+</script>`;
+        }
         return wrap(
-          "Suggestion: consider a dialog polyfill or non-modal fallback; ensure focus trap and Escape closes"
+          "Consider using a dialog polyfill or implementing a non-modal fallback with focus trap and Escape key support"
         );
+
       case "loading-lazy-attr":
+        if (lang === "html") {
+          return `<!-- Progressive enhancement for image loading -->
+<!-- Critical/Hero images: use eager loading -->
+<img src="hero.jpg" loading="eager" alt="Hero image" />
+
+<!-- Below-the-fold images: use lazy loading with fallback -->
+<script>
+  // Feature detection for loading="lazy"
+  const supportsLazyLoad = 'loading' in HTMLImageElement.prototype;
+  
+  // For browsers without native lazy loading, you could:
+  // 1. Leave as-is (images load normally)
+  // 2. Use a lazy loading library
+  // 3. Implement a simple intersection observer
+  
+  if (!supportsLazyLoad) {
+    // Optional: add a lazy loading library here
+    // or implement with Intersection Observer
+  }
+</script>
+<img src="below-fold.jpg" loading="lazy" alt="Below fold image" />`;
+        }
         return wrap(
-          'Suggestion: for hero/LCP images, prefer loading="eager"; keep lazy for non-critical media'
+          'For hero/LCP images, prefer loading="eager"; use loading="lazy" only for non-critical media'
         );
+
       case "css-text-wrap-balance":
+        if (lang === "css") {
+          return `/* Progressive enhancement for text-wrap: balance */
+.heading {
+  /* Base styles for all browsers */
+  max-width: 30ch;
+  text-align: center;
+  
+  /* Modern browsers with text-wrap support */
+  text-wrap: balance;
+}
+
+/* Optional: @supports rule for additional styling based on support */
+@supports (text-wrap: balance) {
+  .heading {
+    /* Additional styles for browsers with text-wrap support */
+  }
+}`;
+        }
         return wrap(
-          "Suggestion: progressive enhancement; provide reasonable default wrapping where balance unsupported"
+          "Use progressive enhancement; provide reasonable default wrapping where balance is unsupported"
         );
-      default:
-        return suggestion ? wrap(`Suggestion: ${suggestion}`) : undefined;
+
       case "css-color-mix":
-        return `/* Fallback: precompute color-mix() values for older browsers */`;
+        if (lang === "css") {
+          return `/* Fallback for browsers without color-mix() */
+:root {
+  /* Pre-computed fallback colors */
+  --mixed-color-50-50: #7a7acf; /* Equivalent of color-mix(in srgb, blue 50%, red 50%) */
+  --mixed-color-25-75: #bf3fbf; /* Equivalent of color-mix(in srgb, blue 25%, red 75%) */
+}
+
+.element {
+  /* Fallback first */
+  background-color: var(--mixed-color-50-50);
+  /* Then the modern syntax for browsers that support it */
+  background-color: color-mix(in srgb, blue 50%, red 50%);
+}
+
+/* Using @supports to provide alternative styling */
+@supports (background-color: color-mix(in srgb, red, blue)) {
+  .element {
+    /* No need for fallback here, we know color-mix is supported */
+  }
+}`;
+        }
+        return wrap(
+          "Precompute color-mix() values for older browsers and use them as fallbacks"
+        );
+
       case "css-modal-pseudo":
-        return `/* Fallback: ensure non-modal behavior when :modal unsupported */`;
+        if (lang === "css") {
+          return `/* Progressive enhancement for :modal pseudo-class */
+/* Base styles for all dialog elements */
+dialog {
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Styles for modal dialogs using attribute selector as fallback */
+dialog[open] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+/* Modern browsers with :modal support */
+dialog:modal {
+  /* Additional styles for true modal dialogs */
+  max-width: 80vw;
+  max-height: 80vh;
+}`;
+        }
+        return wrap(
+          "Ensure non-modal behavior when :modal is unsupported using attribute selectors as fallback"
+        );
+
+      default:
+        // Try to generate a reasonable detection and fallback based on the feature ID
+        const featureParts = id.split("-");
+
+        // For navigator APIs
+        if (id.startsWith("navigator-") && featureParts.length > 1) {
+          const apiName = featureParts[1];
+          return `// Feature detection for navigator.${apiName}
+if (navigator && '${apiName}' in navigator) {
+  // Use navigator.${apiName} here
+  // Example: const result = await navigator.${apiName}(...);
+} else {
+  // Fallback implementation
+  console.log('navigator.${apiName} not supported');
+  ${suggestion ? "// " + suggestion : "// Implement appropriate fallback here"}
+}`;
+        }
+
+        // For document APIs
+        if (id.startsWith("document-") && featureParts.length > 1) {
+          const apiName = featureParts[1];
+          return `// Feature detection for document.${apiName}
+if (document && '${apiName}' in document) {
+  // Use document.${apiName} here
+  // Example: document.${apiName}(...);
+} else {
+  // Fallback implementation
+  console.log('document.${apiName} not supported');
+  ${suggestion ? "// " + suggestion : "// Implement appropriate fallback here"}
+}`;
+        }
+
+        // For window APIs
+        if (id.startsWith("window-") && featureParts.length > 1) {
+          const apiName = featureParts[1];
+          return `// Feature detection for window.${apiName}
+if ('${apiName}' in window) {
+  // Use window.${apiName} here
+  // Example: window.${apiName}(...);
+} else {
+  // Fallback implementation
+  console.log('window.${apiName} not supported');
+  ${suggestion ? "// " + suggestion : "// Implement appropriate fallback here"}
+}`;
+        }
+
+        return suggestion
+          ? wrap(`Suggestion: ${suggestion}`)
+          : wrap(`Consider adding feature detection and fallback for ${id}`);
     }
   }
   private wrapAsComment(doc: vscode.TextDocument, body: string): string {
@@ -562,9 +823,82 @@ export function activate(context: vscode.ExtensionContext) {
       { providedCodeActionKinds: CodeActionProvider.providedCodeActionKinds }
     ),
     vscode.commands.registerCommand("baseline.scanWorkspace", async () => {
-      const docs = vscode.workspace.textDocuments;
-      for (const doc of docs) computeDiagnostics(doc);
-      vscode.window.showInformationMessage("Baseline scan complete.");
+      vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Baseline: Scanning workspace...",
+          cancellable: true,
+        },
+        async (progress, token) => {
+          // First scan open documents for immediate feedback
+          const openDocs = vscode.workspace.textDocuments;
+          for (const doc of openDocs) {
+            if (token.isCancellationRequested) return;
+            computeDiagnostics(doc);
+            progress.report({
+              message: `Scanning open file: ${path.basename(doc.uri.fsPath)}`,
+            });
+          }
+
+          // Then scan all relevant files in the workspace
+          const supportedExtensions = [
+            ".js",
+            ".ts",
+            ".jsx",
+            ".tsx",
+            ".html",
+            ".css",
+          ];
+          let scannedCount = 0;
+
+          for (const workspaceFolder of vscode.workspace.workspaceFolders ||
+            []) {
+            if (token.isCancellationRequested) return;
+
+            const pattern = new vscode.RelativePattern(
+              workspaceFolder,
+              `**/*{${supportedExtensions.join(",")}}`
+            );
+
+            const files = await vscode.workspace.findFiles(
+              pattern,
+              "**/node_modules/**"
+            );
+
+            for (const fileUri of files) {
+              if (token.isCancellationRequested) return;
+
+              // Skip files that are already open
+              if (
+                openDocs.some(
+                  (doc) => doc.uri.toString() === fileUri.toString()
+                )
+              ) {
+                continue;
+              }
+
+              try {
+                const doc = await vscode.workspace.openTextDocument(fileUri);
+                computeDiagnostics(doc);
+                scannedCount++;
+
+                // Update progress every few files
+                if (scannedCount % 10 === 0) {
+                  progress.report({
+                    message: `Scanning workspace: ${scannedCount}/${files.length} files`,
+                  });
+                }
+              } catch (err) {
+                console.error(`Error scanning file ${fileUri.fsPath}:`, err);
+              }
+            }
+          }
+
+          vscode.window.showInformationMessage(
+            `Baseline scan complete: ${scannedCount + openDocs.length} files scanned.`
+          );
+        }
+      );
     }),
     vscode.commands.registerCommand("baseline.restartLsp", async () => {
       if (LSP_PROC) {
@@ -606,23 +940,244 @@ export function activate(context: vscode.ExtensionContext) {
           }
           if (!edits) {
             const findings = analyze([fileRef], { targets }) as any[];
+            // Debug: Log findings to console to see what's being detected
+            console.log(
+              "Baseline findings:",
+              findings.map((f) => ({
+                featureId: f.featureId,
+                code: f.code,
+                title: f.title,
+                line: f.line,
+                column: f.column,
+              }))
+            );
+
+            // Function to generate appropriate guard code based on feature ID
+            const generateGuardCode = (
+              featureId: string,
+              suggestion?: string,
+              lang = "javascript"
+            ) => {
+              switch (featureId) {
+                case "navigator-share":
+                case "navigator.share":
+                  return `if (navigator && 'share' in navigator) {
+  try {
+    await navigator.share({ 
+      title: document.title || "Shared content", 
+      url: location.href 
+    });
+    console.log('Content shared successfully');
+  } catch (error) {
+    console.error('Error sharing:', error);
+  }
+} else {
+  // Fallback: implement sharing via another method
+  console.log('Web Share API not supported');
+  // You could show a custom share dialog with social media links or copy to clipboard
+}`;
+                case "url-canparse":
+                case "url.canparse":
+                  return `function canParseUrl(url) {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Use the canParseUrl function instead of URL.canParse
+const isValidUrl = canParseUrl("https://test.com");`;
+                case "view-transitions":
+                  return `if (document && 'startViewTransition' in document) {
+  document.startViewTransition(() => {
+    // Your view transition code
+  });
+} else {
+  // Fallback for browsers without View Transitions API
+  // Directly apply changes without animation
+}`;
+                case "file-system-access-picker":
+                  return `async function openFile() {
+  if ('showOpenFilePicker' in window) {
+    try {
+      const [handle] = await window.showOpenFilePicker();
+      return await handle.getFile();
+    } catch (err) {
+      console.error('File system access error:', err);
+    }
+  } else {
+    // Fallback for browsers without File System Access API
+    const input = document.createElement('input');
+    input.type = 'file';
+    return new Promise(resolve => {
+      input.onchange = () => resolve(input.files[0]);
+      input.click();
+    });
+  }
+}`;
+                case "urlpattern":
+                  return `// URLPattern API fallback
+function matchPattern(pattern, url) {
+  if (typeof URLPattern === 'function') {
+    return new URLPattern(pattern).test(url);
+  } else {
+    // Simple regex-based fallback
+    // Convert pattern to regex (this is simplified)
+    const regexStr = pattern.replace(/:\\w+/g, '([^/]+)');
+    const regex = new RegExp(regexStr);
+    return regex.test(url);
+  }
+}`;
+                case "css-color-mix":
+                  if (lang === "css") {
+                    return `/* Fallback for browsers without color-mix() */
+:root {
+  --mixed-color: #7a7acf; /* Pre-computed equivalent of color-mix() */
+}
+.element {
+  /* Fallback first */
+  background-color: var(--mixed-color);
+  /* Then the modern syntax */
+  background-color: color-mix(in srgb, blue 50%, red 50%);
+}`;
+                  }
+                  return null;
+                case "css-text-wrap-balance":
+                  if (lang === "css") {
+                    return `/* Progressive enhancement for text-wrap: balance */
+.heading {
+  /* Base styles for all browsers */
+  max-width: 30ch;
+  /* Modern browsers with text-wrap support */
+  text-wrap: balance;
+}`;
+                  }
+                  return null;
+                case "html-dialog":
+                  if (lang === "html") {
+                    return `<!-- Dialog with fallback -->
+<dialog id="myDialog" class="modal">
+  <form method="dialog">
+    <h2>Dialog Title</h2>
+    <p>Dialog content here</p>
+    <button>Close</button>
+  </form>
+</dialog>
+
+<script>
+  const dialog = document.getElementById('myDialog');
+  const showDialog = () => {
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+    } else {
+      // Fallback for browsers without dialog support
+      dialog.setAttribute('open', '');
+      dialog.style.display = 'block';
+      // Add backdrop and focus management manually
+    }
+  };
+</script>`;
+                  }
+                  return null;
+                default:
+                  // For unknown features, generate a basic feature detection pattern
+                  const featureParts = featureId.split("-");
+                  const featureName =
+                    featureParts.length > 1
+                      ? featureParts
+                          .map((p, i) =>
+                            i > 0 ? p.charAt(0).toUpperCase() + p.slice(1) : p
+                          )
+                          .join("")
+                      : featureId;
+
+                  return null;
+              }
+            };
+
+            // Helper function for feature detection code
+            const getFeatureDetectionCode = (featureId: string) => {
+              const parts = featureId.split("-");
+
+              // Common patterns for API detection
+              if (featureId.startsWith("navigator-")) {
+                const prop = parts[1];
+                return `'${prop}' in navigator`;
+              }
+
+              if (featureId.startsWith("document-")) {
+                const prop = parts[1];
+                return `'${prop}' in document`;
+              }
+
+              if (featureId.startsWith("window-")) {
+                const prop = parts[1];
+                return `'${prop}' in window`;
+              }
+
+              // Default with cautious checks
+              return `typeof ${parts[0]} !== 'undefined' && '${parts.slice(1).join("-")}' in ${parts[0]}`;
+            };
+
             const wrap = (body: string) => {
               const lang = doc.languageId;
               if (lang === "html") return `<!-- ${body} -->`;
               if (lang === "css") return `/* ${body} */`;
               return `// ${body}`;
             };
+
             edits = findings
               .filter(
                 (f) => (f as any).advice !== "guarded" && f.baseline !== "yes"
               )
               .map((f) => {
-                const s = (f as any).suggestion as string | undefined;
-                const body = s
-                  ? `Suggestion: ${s}`
+                let featureId = f.featureId || String(f.code || "");
+                const suggestion = (f as any).suggestion as string | undefined;
+
+                // Map feature ID to the correct ID for guard code generation
+                // Log the feature ID for debugging
+                console.log("Feature ID:", featureId, "in file:", doc.fileName);
+
+                // Special case mappings for common features
+                if (
+                  featureId.includes("url.canparse") ||
+                  featureId.toLowerCase().includes("url.canparse")
+                ) {
+                  featureId = "url-canparse";
+                }
+
+                if (
+                  featureId.includes("navigator.share") ||
+                  featureId.toLowerCase().includes("navigator.share")
+                ) {
+                  featureId = "navigator-share";
+                }
+
+                // Try to generate actual implementation code first
+                const guardCode = generateGuardCode(
+                  featureId,
+                  suggestion,
+                  doc.languageId
+                );
+
+                // If we have specific code for this feature, use it
+                if (guardCode) {
+                  return {
+                    line: f.line,
+                    column: f.column,
+                    insertText: guardCode + "\n",
+                  };
+                }
+
+                // Fall back to comment-based suggestion if no specific implementation
+                const body = suggestion
+                  ? `Suggestion: ${suggestion}`
                   : f.docsUrl
                     ? `See docs: ${f.docsUrl}`
-                    : `Consider guards or a fallback`;
+                    : `Consider guards or a fallback for ${featureId}`;
+
                 return {
                   line: f.line,
                   column: f.column,

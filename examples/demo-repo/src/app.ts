@@ -11,6 +11,12 @@ function demo() {
   if ((navigator as any).share) {
     navigator.share({ title: "Demo", url: location.href }).catch(() => {});
   }
+
+  // Direct usage of URL.canParse without feature detection (should trigger warning)
+  console.log("Direct URL.canParse usage:", URL.canParse("https://test.com"));
+
+  // Direct usage of navigator.share without feature detection (should trigger warning)
+  navigator.share({ title: "Unsafe Share" });
 }
 
 demo();
