@@ -21,21 +21,23 @@
     "build": "npm run build:core && npm run build:helpers && npm run build:cli && npm run build:action && npm run build:eslint && npm run build:lsp && npm run build:vscode",
     "test": "npm run build && npm --prefix packages/core run test && npm --prefix packages/cli run test && npm --prefix packages/action run test && npm --prefix packages/eslint-plugin-baseline run test",
     "format": "prettier --write .",
-  "lint": "eslint .",
-  "lint:fix": "eslint . --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "clean": "rimraf packages/**/dist packages/**/node_modules",
     "release:version": "changeset version && npm i --package-lock-only",
     "release:publish": "npm -w packages/core publish --access public && npm -w packages/helpers publish --access public && npm -w packages/cli publish --access public && npm -w packages/eslint-plugin-baseline publish --access public",
     "vsce:package": "cd packages/vscode-extension && npx @vscode/vsce package --no-dependencies --out ../../baseline-guardrails-vscode.vsix"
   },
   "devDependencies": {
+    "@eslint/js": "^9.12.0",
     "@types/node": "^20.12.12",
     "eslint": "^9.9.0",
     "prettier": "^3.3.3",
     "@changesets/cli": "^2.27.8",
     "@changesets/changelog-github": "^0.5.0",
     "rimraf": "^5.0.5",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.12.2"
   },
   "dependencies": {}
 }
