@@ -23,8 +23,19 @@ jobs:
                   node-version: "20"
                   cache: "npm"
 
-            - name: Install dependencies (workspaces)
-              run: npm install --workspaces --include-workspace-root --no-audit --no-fund
+            - name: Install dependencies (root)
+              run: npm install --no-audit --no-fund
+
+            - name: Install workspace packages explicitly
+              run: >-
+                  npm install --no-audit --no-fund
+                  -w packages/core
+                  -w packages/helpers
+                  -w packages/cli
+                  -w packages/action
+                  -w packages/eslint-plugin-baseline
+                  -w packages/lsp-server
+                  -w packages/vscode-extension
 
             - name: Build monorepo
               run: npm run build

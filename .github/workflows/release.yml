@@ -19,8 +19,19 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
-      - name: Install deps (workspaces)
-        run: npm install --workspaces --include-workspace-root --no-audit --no-fund
+      - name: Install deps (root)
+        run: npm install --no-audit --no-fund
+
+      - name: Install workspace packages explicitly
+        run: >-
+          npm install --no-audit --no-fund
+          -w packages/core
+          -w packages/helpers
+          -w packages/cli
+          -w packages/action
+          -w packages/eslint-plugin-baseline
+          -w packages/lsp-server
+          -w packages/vscode-extension
       - name: Build
         run: npm run build
       - name: Create Release PR or Publish
