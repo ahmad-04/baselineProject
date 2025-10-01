@@ -12,6 +12,14 @@ inputs:
     description: "Path to scan"
     required: false
     default: "."
+  generate-html-report:
+    description: "Generate an HTML report and upload as an artifact"
+    required: false
+    default: "false"
+  report-html-path:
+    description: "Path/filename for the HTML report"
+    required: false
+    default: "baseline-report.html"
 runs:
   using: "node20"
   main: "dist/index.js"

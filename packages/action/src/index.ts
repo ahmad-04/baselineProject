@@ -9,7 +9,7 @@ async function run() {
     const token = core.getInput("github-token", { required: false });
     const scanPath = core.getInput("path") || ".";
     const generateHtml =
-      (core.getInput("generate-html-report") || "true").toLowerCase() !==
+      (core.getInput("generate-html-report") || "false").toLowerCase() !==
       "false";
     const htmlReportPath =
       core.getInput("report-html-path") || "baseline-report.html";
