@@ -1,0 +1,74 @@
+name: Release Packages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      create_pr:
+        description: "Create a release PR (true) or publish directly (false)"
+        required: false
+        default: "true"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+      - name: Upgrade npm
+        run: |
+          npm --version
+          npm i -g npm@latest
+          npm --version
+      - name: Install deps (root)
+        run: npm install --no-audit --no-fund
+
+      - name: Install workspace packages explicitly
+        run: >-
+          npm install --no-audit --no-fund
+          -w packages/core
+          -w packages/helpers
+          -w packages/cli
+          -w packages/action
+          -w packages/eslint-plugin-baseline
+          -w packages/lsp-server
+          -w packages/vscode-extension
+      - name: Build
+        run: npm run build
+      - name: Create Release PR or Publish
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
+        uses: changesets/action@v1
+        with:
+          publish: npm run release:publish
+          version: npm run release:version
+        env:
+          # If org policy blocks the Actions bot, create a classic PAT secret (CHANGESETS_TOKEN)
+          # and replace the line below with: GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Version (direct)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_pr == 'false' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          npm run release:version
+          git add -A
+          git commit -m "chore(release): version packages" || echo "No changes to commit"
+          git push origin HEAD:main
+
+      - name: Publish (direct)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_pr == 'false' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm run release:publish

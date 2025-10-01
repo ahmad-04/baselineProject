@@ -259,6 +259,7 @@ jobs:
 ```
 
 Notes:
+
 - The `@action-v0` tag is a moving major tag you can update when releasing. Consumers may also pin to a specific tag like `@action-v0.1.0` or a commit SHA.
 - The Action invokes the published CLI via `npx @baseline-tools/cli`.
 
