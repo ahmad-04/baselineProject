@@ -29,7 +29,6 @@ jobs:
                   npm i -g npm@latest
                   npm --version
 
-
             - name: Install dependencies (root)
               run: npm install --no-audit --no-fund
 
