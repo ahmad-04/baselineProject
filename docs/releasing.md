@@ -21,7 +21,12 @@ npx changeset
 - Open/refresh a Release PR with bumped versions (if changesets exist), or
 - Publish immediately when the Release PR is merged
 
-3. The workflow calls these scripts:
+3. You can also trigger the workflow manually with an input to skip the release PR and publish directly:
+
+- Manual dispatch input `create_pr` (default `true`): when set to `false`, the workflow versions, commits, pushes to `main`, and publishes without opening a PR.
+- For the default PR path, ensure your org/repo allows the Actions bot to create PRs, or configure a Personal Access Token (PAT) like `CHANGESETS_TOKEN` and use that in the Changesets step.
+
+4. The workflow calls these scripts:
 
 - `npm run release:version`: applies version bumps and updates lockfile
 - `npm run release:publish`: publishes public packages to npm
@@ -51,7 +56,7 @@ To publish to the Marketplace, use `vsce publish` with your publisher name confi
 
 ## SARIF and HTML Reports in CI
 
-- `baseline.yml` uploads SARIF for Code Scanning and HTML reports as artifacts
+- `baseline-guard.yml` uploads SARIF for Code Scanning and HTML reports as artifacts
 - `scan-changed` job scans only changed files using `--changed` + cache
 
 ## Tips

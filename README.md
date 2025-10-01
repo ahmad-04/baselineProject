@@ -8,8 +8,8 @@ Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Co
 - CLI: `baseline-scan` — pretty/JSON output, HTML adoption report, diff-only scanning.
 - ESLint: `eslint-plugin-baseline` — rule `baseline/no-nonbaseline` with suggestions, guard‑aware suppression.
 - VS Code: `baseline-guardrails-vscode` — diagnostics, hover, quick fixes, status bar, scan toggle, and Targets/Threshold picker.
-- Action: `@baseline-tools/action` — PR bot summary with code snippets; optional HTML report artifact.
-- SARIF: CLI can emit SARIF 2.1.0 for GitHub Code Scanning.
+- Action: `@baseline-tools/action` — compact PR summary (top findings), optional HTML report artifact, and SARIF output.
+- SARIF: CLI/Action can emit SARIF 2.1.0 for GitHub Code Scanning.
 
 ## Features
 
@@ -54,7 +54,7 @@ node packages/cli/dist/index.js examples/demo-repo --report baseline-report.sari
 
 4. GitHub Action (already wired)
 
-The workflow `.github/workflows/baseline.yml` builds, scans, uploads a JSON artifact, posts a PR comment, and uploads the HTML report.
+The workflow `.github/workflows/baseline-guard.yml` builds, scans, posts a compact PR summary, uploads the HTML report, and uploads SARIF to GitHub Code Scanning.
 
 ## CLI Usage
 
@@ -175,7 +175,7 @@ async function sharePage() {
 
 ## GitHub Action
 
-Local action `packages/action` posts a PR summary and, by default, generates an HTML report.
+Local action `packages/action` posts a compact PR summary and, by default, generates an HTML report. It can also generate SARIF for Code Scanning.
 
 Inputs:
 
@@ -183,25 +183,37 @@ Inputs:
 - `path` (string): folder to scan.
 - `generate-html-report` (optional, default `true`): write HTML report.
 - `report-html-path` (optional, default `baseline-report.html`): where to save it.
+- `generate-sarif-report` (optional, default `true`): write SARIF report for Code Scanning.
+- `report-sarif-path` (optional, default `baseline-report.sarif`): where to save SARIF.
 
 Outputs:
 
 - `html-report`: path to the generated HTML file.
+- `sarif-report`: path to the generated SARIF file.
 
 Workflow snippet:
 
 ```yaml
-- name: Baseline Guard comment
-	uses: ./packages/action
-	with:
-		github-token: ${{ secrets.GITHUB_TOKEN }}
-		path: examples/demo-repo
+- name: Baseline Guard summary + reports
+  uses: ./packages/action
+  with:
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+    path: examples/demo-repo
+    generate-html-report: true
+    generate-sarif-report: true
+
 - name: Upload HTML report (if generated)
-	if: always()
-	uses: actions/upload-artifact@v4
-	with:
-		name: baseline-html-report
-		path: examples/demo-repo/baseline-report.html
+  if: always()
+  uses: actions/upload-artifact@v4
+  with:
+    name: baseline-html-report
+    path: examples/demo-repo/baseline-report.html
+
+- name: Upload SARIF to Code Scanning
+  if: always()
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: examples/demo-repo/baseline-report.sarif
 ```
 
 ## Configuration
