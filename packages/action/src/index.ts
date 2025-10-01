@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
+import path from "node:path";
 const pexec = promisify(exec);
 
 async function run() {
@@ -79,51 +80,60 @@ async function run() {
     }
     const findings: any[] = report.findings || [];
     const nonBaseline = findings.filter((f) => f.baseline !== "yes");
+    const safeCount = findings.filter((f) => f.advice === "safe").length;
+    const guardedCount = findings.filter((f) => f.advice === "guarded").length;
+    const needsGuardCount = findings.filter((f) => f.advice === "needs-guard").length;
 
-    const lines: string[] = [];
-    lines.push(
-      `### Baseline Guard — ${nonBaseline.length} non-Baseline feature(s) detected`
-    );
-    if (report.meta?.targets) {
-      lines.push(`Targets: ${(report.meta.targets as string[]).join(", ")}`);
-    }
-    for (const f of nonBaseline.slice(0, 20)) {
-      lines.push(`\n- ${f.title} — ${f.file}:${f.line}`);
-      if (f.suggestion) {
-        lines.push(`  - Fix: ${f.suggestion}`);
-        // add code block with a generic snippet based on featureId
-        let snippet = "";
-        if (f.featureId === "navigator-share") {
-          snippet = `import { canShare } from '@baseline-tools/helpers';\n\nif (canShare()) {\n  await navigator.share({ title: document.title, url: location.href });\n} else {\n  // TODO: fallback\n}`;
-        } else if (f.featureId === "url-canparse") {
-          snippet = `import { canParseUrl } from '@baseline-tools/helpers';\n\nif (canParseUrl(myUrl)) {\n  // valid\n} else {\n  // fallback\n}`;
-        } else if (f.featureId === "view-transitions") {
-          snippet = `import { hasViewTransitions } from '@baseline-tools/helpers';\n\nif (hasViewTransitions()) {\n  // document.startViewTransition(() => { /* ... */ })\n} else {\n  // fallback\n}`;
-        } else if (f.featureId === "file-system-access-picker") {
-          snippet = `import { canShowOpenFilePicker } from '@baseline-tools/helpers';\n\nif (canShowOpenFilePicker()) {\n  // await showOpenFilePicker()\n} else {\n  // fallback: <input type=\"file\">\n}`;
+    // Build a compact table (top 10 issues, prioritize needs-guard)
+    const TOP_N = 10;
+    const baseDir = path.resolve(scanPath);
+    const top = [...nonBaseline]
+      .sort((a, b) => {
+        const order = (x: any) => (x.advice === "needs-guard" ? 0 : x.advice === "guarded" ? 1 : 2);
+        return order(a) - order(b);
+      })
+      .slice(0, TOP_N);
+
+    const tableHeader = [
+      "| Feature | Location | Advice | ~Unsupported | Docs |",
+      "|---|---|---:|---:|---|",
+    ];
+    const tableRows = top.map((f) => {
+      const rel = (() => {
+        try {
+          const r = path.relative(baseDir, f.file || "");
+          return (r && !r.startsWith("..")) ? r : path.relative(process.cwd(), f.file || "");
+        } catch {
+          return f.file || "";
         }
-        if (snippet) {
-          lines.push("  - Example:");
-          lines.push("    \n``````\n".replace(/`/g, "`")); // ensure fence
-          lines.push(snippet);
-          lines.push("``````");
-        }
-      }
-      if (f.docsUrl) lines.push(`  - Docs: ${f.docsUrl}`);
-    }
-    if (nonBaseline.length > 20) {
-      lines.push(`\n…and ${nonBaseline.length - 20} more.`);
+      })()
+        .replace(/\\\\/g, "/");
+      const advice = f.advice === "guarded" ? "guarded" : f.advice === "safe" ? "safe" : "needs-guard";
+      const unsupported = typeof f.unsupportedPercent === "number" ? `${f.unsupportedPercent}%` : "";
+      const docs = f.docsUrl ? `[link](${f.docsUrl})` : "";
+      return `| ${escapeMd(f.title)} | ${escapeMd(rel)}:${f.line} | ${advice} | ${unsupported} | ${docs} |`;
+    });
+
+    const summaryLines: string[] = [];
+    summaryLines.push(`**Baseline Guard** — ${nonBaseline.length} non-Baseline`);
+    if (report.meta?.targets) summaryLines.push(`Targets: ${(report.meta.targets as string[]).join(", ")}`);
+    summaryLines.push(`Totals — safe: ${safeCount}, guarded: ${guardedCount}, needs-guard: ${needsGuardCount}`);
+    if (report.meta?.filesScanned != null) summaryLines.push(`Files scanned: ${report.meta.filesScanned}`);
+    summaryLines.push("");
+    summaryLines.push(...tableHeader, ...tableRows);
+    if (nonBaseline.length > TOP_N) {
+      summaryLines.push(`\n…plus ${nonBaseline.length - TOP_N} more. Consider enabling the HTML report for full details.`);
     }
 
     core.summary.addHeading("Baseline Guard");
-    core.summary.addRaw(lines.join("\n"));
+    core.summary.addRaw(summaryLines.join("\n"));
     if (generateHtml) {
       const cmd = `node ./packages/cli/dist/index.js ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
       core.info(`Generating HTML report: ${htmlReportPath}`);
       await pexec(cmd);
       core.setOutput("html-report", htmlReportPath);
       core.summary.addRaw(`\n\nReport saved to: ${htmlReportPath}`);
-      lines.push(`\nHTML report: ${htmlReportPath} (see workflow Artifacts)`);
+      summaryLines.push(`\nHTML report: ${htmlReportPath} (see workflow Artifacts)`);
     }
     await core.summary.write();
 
@@ -131,11 +141,12 @@ async function run() {
       const octokit = github.getOctokit(token);
       const ctx = github.context;
       if (ctx.payload.pull_request) {
+        const commentBody = summaryLines.join("\n");
         await octokit.rest.issues.createComment({
           owner: ctx.repo.owner,
           repo: ctx.repo.repo,
           issue_number: ctx.payload.pull_request.number,
-          body: lines.join("\n"),
+          body: commentBody,
         });
       }
     }
@@ -145,3 +156,8 @@ async function run() {
 }
 
 run();
+
+// Minimal markdown escaper for table cells
+function escapeMd(s: string): string {
+  return String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+}
