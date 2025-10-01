@@ -82,14 +82,17 @@ async function run() {
     const nonBaseline = findings.filter((f) => f.baseline !== "yes");
     const safeCount = findings.filter((f) => f.advice === "safe").length;
     const guardedCount = findings.filter((f) => f.advice === "guarded").length;
-    const needsGuardCount = findings.filter((f) => f.advice === "needs-guard").length;
+    const needsGuardCount = findings.filter(
+      (f) => f.advice === "needs-guard"
+    ).length;
 
     // Build a compact table (top 10 issues, prioritize needs-guard)
     const TOP_N = 10;
     const baseDir = path.resolve(scanPath);
     const top = [...nonBaseline]
       .sort((a, b) => {
-        const order = (x: any) => (x.advice === "needs-guard" ? 0 : x.advice === "guarded" ? 1 : 2);
+        const order = (x: any) =>
+          x.advice === "needs-guard" ? 0 : x.advice === "guarded" ? 1 : 2;
         return order(a) - order(b);
       })
       .slice(0, TOP_N);
@@ -102,27 +105,46 @@ async function run() {
       const rel = (() => {
         try {
           const r = path.relative(baseDir, f.file || "");
-          return (r && !r.startsWith("..")) ? r : path.relative(process.cwd(), f.file || "");
+          return r && !r.startsWith("..")
+            ? r
+            : path.relative(process.cwd(), f.file || "");
         } catch {
           return f.file || "";
         }
-      })()
-        .replace(/\\\\/g, "/");
-      const advice = f.advice === "guarded" ? "guarded" : f.advice === "safe" ? "safe" : "needs-guard";
-      const unsupported = typeof f.unsupportedPercent === "number" ? `${f.unsupportedPercent}%` : "";
+      })().replace(/\\\\/g, "/");
+      const advice =
+        f.advice === "guarded"
+          ? "guarded"
+          : f.advice === "safe"
+            ? "safe"
+            : "needs-guard";
+      const unsupported =
+        typeof f.unsupportedPercent === "number"
+          ? `${f.unsupportedPercent}%`
+          : "";
       const docs = f.docsUrl ? `[link](${f.docsUrl})` : "";
       return `| ${escapeMd(f.title)} | ${escapeMd(rel)}:${f.line} | ${advice} | ${unsupported} | ${docs} |`;
     });
 
     const summaryLines: string[] = [];
-    summaryLines.push(`**Baseline Guard** — ${nonBaseline.length} non-Baseline`);
-    if (report.meta?.targets) summaryLines.push(`Targets: ${(report.meta.targets as string[]).join(", ")}`);
-    summaryLines.push(`Totals — safe: ${safeCount}, guarded: ${guardedCount}, needs-guard: ${needsGuardCount}`);
-    if (report.meta?.filesScanned != null) summaryLines.push(`Files scanned: ${report.meta.filesScanned}`);
+    summaryLines.push(
+      `**Baseline Guard** — ${nonBaseline.length} non-Baseline`
+    );
+    if (report.meta?.targets)
+      summaryLines.push(
+        `Targets: ${(report.meta.targets as string[]).join(", ")}`
+      );
+    summaryLines.push(
+      `Totals — safe: ${safeCount}, guarded: ${guardedCount}, needs-guard: ${needsGuardCount}`
+    );
+    if (report.meta?.filesScanned != null)
+      summaryLines.push(`Files scanned: ${report.meta.filesScanned}`);
     summaryLines.push("");
     summaryLines.push(...tableHeader, ...tableRows);
     if (nonBaseline.length > TOP_N) {
-      summaryLines.push(`\n…plus ${nonBaseline.length - TOP_N} more. Consider enabling the HTML report for full details.`);
+      summaryLines.push(
+        `\n…plus ${nonBaseline.length - TOP_N} more. Consider enabling the HTML report for full details.`
+      );
     }
 
     core.summary.addHeading("Baseline Guard");
@@ -133,7 +155,9 @@ async function run() {
       await pexec(cmd);
       core.setOutput("html-report", htmlReportPath);
       core.summary.addRaw(`\n\nReport saved to: ${htmlReportPath}`);
-      summaryLines.push(`\nHTML report: ${htmlReportPath} (see workflow Artifacts)`);
+      summaryLines.push(
+        `\nHTML report: ${htmlReportPath} (see workflow Artifacts)`
+      );
     }
     await core.summary.write();
 
@@ -159,5 +183,8 @@ run();
 
 // Minimal markdown escaper for table cells
 function escapeMd(s: string): string {
-  return String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+  return String(s ?? "")
+    .replace(/\|/g, "\\|")
+    .replace(/\n/g, " ")
+    .trim();
 }
