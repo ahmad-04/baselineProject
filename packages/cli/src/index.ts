@@ -517,26 +517,26 @@ async function main() {
     } as CacheShape;
     for (const batch of fileRefsBatches) {
       for (const ref of batch) {
-      try {
-        const stat = await (await import("node:fs/promises")).stat(ref.path);
-        const mtimeMs = stat.mtimeMs;
-        const key = ref.path.replace(/\\/g, "/");
-        const prev = cache.byFile?.[key];
-        const currHash = contentHashByPath.get(key);
-        if (
-          usable &&
-          prev &&
-          prev.contentHash &&
-          currHash &&
-          prev.contentHash === currHash &&
-          JSON.stringify(cache.targets) === JSON.stringify(targets)
-        ) {
-          const reused = prev.result.map((f: any) => ({
-            ...f,
-            file: ref.path,
-          }));
+        try {
+          const stat = await (await import("node:fs/promises")).stat(ref.path);
+          const mtimeMs = stat.mtimeMs;
+          const key = ref.path.replace(/\\/g, "/");
+          const prev = cache.byFile?.[key];
+          const currHash = contentHashByPath.get(key);
+          if (
+            usable &&
+            prev &&
+            prev.contentHash &&
+            currHash &&
+            prev.contentHash === currHash &&
+            JSON.stringify(cache.targets) === JSON.stringify(targets)
+          ) {
+            const reused = prev.result.map((f: any) => ({
+              ...f,
+              file: ref.path,
+            }));
             findings.push(...reused);
-          updatedCache.byFile[key] = prev;
+            updatedCache.byFile[key] = prev;
             continue;
           }
           const res = analyze([{ path: ref.path, content: ref.content }], {

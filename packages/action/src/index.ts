@@ -29,7 +29,7 @@ async function run() {
       ".html",
       ".htm",
     ];
-  if (token && ctx.payload.pull_request) {
+    if (token && ctx.payload.pull_request) {
       const octokit = github.getOctokit(token);
       const { owner, repo } = ctx.repo;
       const prNumber = ctx.payload.pull_request.number;
