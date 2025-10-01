@@ -1,10 +1,35 @@
 import * as vscode from "vscode";
-import { analyze, type FileRef } from "@baseline-tools/core";
 import { spawn, ChildProcessWithoutNullStreams } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
 const DIAG_COLLECTION = vscode.languages.createDiagnosticCollection("baseline");
+
+// Local lightweight type to avoid compile-time dependency on core types
+type FileRef = { path: string; content: string };
+
+// Resolve analyzer at runtime to support VSIX installs
+let analyze: (
+  files: Iterable<FileRef>,
+  options?: { targets?: string[] }
+) => any[] = () => [];
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  ({ analyze } = require("@baseline-tools/core"));
+} catch {
+  try {
+    // Fallback to bundled copy: dist/core-dist/index.js (copied during packaging)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    ({ analyze } = require(path.resolve(__dirname, "core-dist/index.js")));
+  } catch (e) {
+    console.error("Baseline: failed to load analyzer module", e);
+  }
+}
+if (analyze === (((): any[] => []) as any)) {
+  console.error(
+    "Baseline: analyzer unavailable. Extension will be idle until the analyzer can be resolved."
+  );
+}
 let STATUS_ITEM: vscode.StatusBarItem | undefined;
 let SCAN_ON_CHANGE = true;
 let USE_LSP = false;
@@ -158,6 +183,7 @@ function fileToFileRef(doc: vscode.TextDocument): FileRef | null {
     "javascriptreact",
     "typescriptreact",
     "css",
+    "scss",
     "html",
   ];
   if (!exts.includes(lang)) return null;
@@ -244,6 +270,12 @@ function loadConfig(doc: vscode.TextDocument): BaselineConfig | undefined {
 }
 
 function computeDiagnostics(doc: vscode.TextDocument) {
+  if (analyze === (((): any[] => []) as any)) {
+    // Analyzer not available, clear diagnostics and return gracefully
+    DIAG_COLLECTION.delete(doc.uri);
+    updateStatusBar(doc);
+    return;
+  }
   const fileRef = fileToFileRef(doc);
   if (!fileRef) {
     DIAG_COLLECTION.delete(doc.uri);
@@ -275,6 +307,8 @@ function computeDiagnostics(doc: vscode.TextDocument) {
           return "safe";
         return a || "needs-guard";
       })();
+      // Do not show diagnostics for safe findings
+      if (effAdvice === "safe") continue;
       const range = toRange(doc, f.line, f.column);
       const msgAdvice =
         effAdvice === "guarded"
@@ -710,21 +744,8 @@ if ('${apiName}' in window) {
       );
       action.diagnostics = [d];
       const edit = new vscode.WorkspaceEdit();
-      // Ensure helpers import exists for known features
-      const text = doc.getText();
-      let importLine: string | undefined;
-      const id = String(d.code || "");
-      if (id === "navigator-share")
-        importLine = `import { canShare } from '@baseline-tools/helpers';\n`;
-      else if (id === "url-canparse")
-        importLine = `import { canParseUrl } from '@baseline-tools/helpers';\n`;
-      else if (id === "view-transitions")
-        importLine = `import { hasViewTransitions } from '@baseline-tools/helpers';\n`;
-      else if (id === "file-system-access-picker")
-        importLine = `import { canShowOpenFilePicker } from '@baseline-tools/helpers';\n`;
-      if (importLine && !text.includes("@baseline-tools/helpers")) {
-        edit.insert(doc.uri, new vscode.Position(0, 0), importLine + "\n");
-      }
+      // Note: do not auto-insert helper imports to avoid breaking builds.
+      // Snippets below are self-contained and do not require extra deps.
       // Insert near selection start if the diagnostic is inside selection, else at diagnostic
       const insertPos =
         sel && sel.contains(d.range) ? sel.start : d.range.start;
@@ -789,9 +810,26 @@ export function activate(context: vscode.ExtensionContext) {
         }
       }
     }),
-    vscode.workspace.onDidCloseTextDocument((doc: vscode.TextDocument) =>
-      DIAG_COLLECTION.delete(doc.uri)
-    ),
+    // Do not clear diagnostics on close; keep them visible in Problems view
+    // Add file system watchers to update diagnostics when files change or are deleted
+    (() => {
+      const watcher = vscode.workspace.createFileSystemWatcher(
+        "**/*.{js,ts,jsx,tsx,html,htm,css,scss}"
+      );
+      const recompute = async (uri: vscode.Uri) => {
+        try {
+          const doc = await vscode.workspace.openTextDocument(uri);
+          computeDiagnostics(doc);
+        } catch (e) {
+          // If file can't be opened (e.g., binary or moved), clear diagnostics
+          DIAG_COLLECTION.delete(uri);
+        }
+      };
+      watcher.onDidChange(recompute);
+      watcher.onDidCreate(recompute);
+      watcher.onDidDelete((uri) => DIAG_COLLECTION.delete(uri));
+      return watcher;
+    })(),
     vscode.window.onDidChangeActiveTextEditor((ed) => {
       if (ed?.document) updateStatusBar(ed.document);
     }),
@@ -806,6 +844,7 @@ export function activate(context: vscode.ExtensionContext) {
         { scheme: "file", language: "javascriptreact" },
         { scheme: "file", language: "typescriptreact" },
         { scheme: "file", language: "css" },
+        { scheme: "file", language: "scss" },
         { scheme: "file", language: "html" },
       ],
       new HoverProvider()
@@ -817,6 +856,7 @@ export function activate(context: vscode.ExtensionContext) {
         "javascriptreact",
         "typescriptreact",
         "css",
+        "scss",
         "html",
       ],
       new CodeActionProvider(),
@@ -842,12 +882,14 @@ export function activate(context: vscode.ExtensionContext) {
 
           // Then scan all relevant files in the workspace
           const supportedExtensions = [
-            ".js",
-            ".ts",
-            ".jsx",
-            ".tsx",
-            ".html",
-            ".css",
+            "js",
+            "ts",
+            "jsx",
+            "tsx",
+            "html",
+            "htm",
+            "css",
+            "scss",
           ];
           let scannedCount = 0;
 
@@ -855,14 +897,41 @@ export function activate(context: vscode.ExtensionContext) {
             []) {
             if (token.isCancellationRequested) return;
 
+            // Load ignore patterns from baseline.config.json at workspace root (like CLI)
+            const wsRoot = workspaceFolder.uri.fsPath;
+            let ignores: string[] = [];
+            try {
+              const cfgPath = path.join(wsRoot, "baseline.config.json");
+              if (fs.existsSync(cfgPath)) {
+                const raw = fs.readFileSync(cfgPath, "utf8");
+                const cfg = JSON.parse(raw) as { ignore?: string[] };
+                if (Array.isArray(cfg.ignore)) ignores = cfg.ignore;
+              }
+            } catch {}
+            // Default excludes for noise and generated artifacts
+            const defaultExcludes = [
+              "**/node_modules/**",
+              "**/dist/**",
+              "**/build/**",
+              "**/.*/**", // dot folders like .git
+              "**/baseline-report.*",
+              "**/*.sarif",
+              "**/*.vsix",
+              "**/.baseline-scan-cache.json",
+            ];
+            const excludeParts = [...defaultExcludes, ...ignores];
+            const excludeGlob = excludeParts.length
+              ? `{${excludeParts.join(",")}}`
+              : "**/node_modules/**";
+
             const pattern = new vscode.RelativePattern(
               workspaceFolder,
-              `**/*{${supportedExtensions.join(",")}}`
+              `**/*.{${supportedExtensions.join(",")}}`
             );
 
             const files = await vscode.workspace.findFiles(
               pattern,
-              "**/node_modules/**"
+              excludeGlob
             );
 
             for (const fileUri of files) {
@@ -947,10 +1016,30 @@ export function activate(context: vscode.ExtensionContext) {
                 featureId: f.featureId,
                 code: f.code,
                 title: f.title,
+                baseline: f.baseline,
+                advice: (f as any).advice,
                 line: f.line,
                 column: f.column,
               }))
             );
+
+            // Enhance detection for specific known patterns
+            findings.forEach((f) => {
+              const content = doc.getText();
+              const line = content.split("\n")[Math.max(0, f.line - 1)];
+
+              // Special case for URL.canParse
+              if (line && line.includes("URL.canParse")) {
+                f.featureId = "url-canparse";
+                console.log("Enhanced detection: Found URL.canParse usage");
+              }
+
+              // Special case for navigator.share
+              if (line && line.includes("navigator.share")) {
+                f.featureId = "navigator-share";
+                console.log("Enhanced detection: Found navigator.share usage");
+              }
+            });
 
             // Function to generate appropriate guard code based on feature ID
             const generateGuardCode = (
@@ -1135,31 +1224,94 @@ function matchPattern(pattern, url) {
               .map((f) => {
                 let featureId = f.featureId || String(f.code || "");
                 const suggestion = (f as any).suggestion as string | undefined;
+                const title = f.title || "";
 
                 // Map feature ID to the correct ID for guard code generation
-                // Log the feature ID for debugging
-                console.log("Feature ID:", featureId, "in file:", doc.fileName);
+                // Log feature details for debugging
+                console.log("Feature details:", {
+                  id: featureId,
+                  title: title,
+                  file: doc.fileName,
+                  line: f.line,
+                  column: f.column,
+                });
 
-                // Special case mappings for common features
+                // Special case mappings based on feature ID or title
                 if (
+                  featureId === "url-canparse" ||
                   featureId.includes("url.canparse") ||
-                  featureId.toLowerCase().includes("url.canparse")
+                  title.includes("URL.canParse")
                 ) {
                   featureId = "url-canparse";
+                  console.log("✅ Mapped to url-canparse");
+                }
+                // Force detection for URL.canParse based on suggestion text
+                else if (
+                  suggestion &&
+                  suggestion.includes("URL") &&
+                  suggestion.includes("validation")
+                ) {
+                  featureId = "url-canparse";
+                  console.log(
+                    "🔍 Forced detection of URL.canParse from suggestion"
+                  );
                 }
 
                 if (
+                  featureId === "navigator-share" ||
                   featureId.includes("navigator.share") ||
-                  featureId.toLowerCase().includes("navigator.share")
+                  title.includes("Web Share API") ||
+                  title.includes("navigator.share")
                 ) {
                   featureId = "navigator-share";
+                  console.log("✅ Mapped to navigator-share");
+                }
+                // Force detection for navigator.share based on suggestion or code context
+                else if (
+                  (suggestion && suggestion.toLowerCase().includes("share")) ||
+                  (f.code && String(f.code).includes("share"))
+                ) {
+                  featureId = "navigator-share";
+                  console.log(
+                    "🔍 Forced detection of navigator.share from context"
+                  );
                 }
 
                 // Try to generate actual implementation code first
-                const guardCode = generateGuardCode(
+                // Try to get guard code with exact ID match first
+                let guardCode = generateGuardCode(
                   featureId,
                   suggestion,
                   doc.languageId
+                );
+
+                // If no match, try some common variations
+                if (!guardCode) {
+                  // For URL.canParse
+                  if (f.title && f.title.includes("URL.canParse")) {
+                    guardCode = generateGuardCode(
+                      "url-canparse",
+                      suggestion,
+                      doc.languageId
+                    );
+                  }
+                  // For navigator.share
+                  else if (
+                    f.title &&
+                    (f.title.includes("navigator.share") ||
+                      f.title.includes("Web Share"))
+                  ) {
+                    guardCode = generateGuardCode(
+                      "navigator-share",
+                      suggestion,
+                      doc.languageId
+                    );
+                  }
+                }
+
+                // Log what we're using
+                console.log(
+                  `Using feature ID: ${featureId}, Found guard code: ${!!guardCode}`
                 );
 
                 // If we have specific code for this feature, use it

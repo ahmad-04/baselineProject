@@ -1,10 +1,48 @@
 /* Demo CSS with modern features */
+
+/* 1) :has() */
 .card:has(> img) {
   border: 1px solid oklch(60% 0.18 240);
 }
 
+/* 2) text-wrap: balance */
+.heading {
+  max-width: 30ch;
+  text-wrap: balance;
+}
+
+/* 3) color-mix() */
+.mix {
+  background-color: color-mix(in srgb, blue 50%, red 50%);
+}
+
+/* 4) CSS Nesting pattern (&) */
+.button {
+  color: black;
+}
+.button {
+  /* Emulate nesting marker to trigger detection */
+  &.primary {
+    color: white;
+  }
+}
+
+/* 5) :modal pseudo-class */
+dialog:modal {
+  max-width: 80vw;
+}
+
+/* 6) Container Queries */
 @container (width > 400px) {
   .grid {
     display: grid;
   }
+}
+
+/* 7) oklch/oklab colors */
+.ok {
+  color: oklch(60% 0.18 240);
+}
+.ok2 {
+  color: oklab(0.7 0.1 -0.1);
 }

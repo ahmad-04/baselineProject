@@ -20,8 +20,10 @@ jobs:
         run: npm run build
       - name: Install VSCE
         run: npm i -g @vscode/vsce
-      - name: Package extension
-        run: cd packages/vscode-extension && vsce package --no-dependencies --out ../../baseline-guardrails-vscode.vsix
+      - name: Package extension (staged)
+        run: |
+          node packages/vscode-extension/scripts/bundle-core.cjs
+          node packages/vscode-extension/scripts/pack.cjs
       - name: Upload vsix artifact
         uses: actions/upload-artifact@v4
         with:

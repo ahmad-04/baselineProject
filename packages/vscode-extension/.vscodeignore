@@ -1,7 +1,18 @@
-node_modules
-**/*.map
+# Default: ignore everything
+**/*
+
+# Allow only built output and required metadata
+!dist/**
+!README.md
+!LICENSE
+!package.json
+
+# Explicitly exclude dev folders even if matched by above
 src/**
-.gitignore
+scripts/**
+node_modules/**
 .vscode/**
-.vscode-test/**
-**/*.ts
+*.ts
+*.map
+tsconfig.json
+tsconfig.*.json

@@ -190,6 +190,26 @@
           ]
         },
         {
+          "ruleId": "navigator-share",
+          "level": "warning",
+          "message": {
+            "text": "Web Share API — guarded"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 19,
+                  "startColumn": 3
+                }
+              }
+            }
+          ]
+        },
+        {
           "ruleId": "url-canparse",
           "level": "warning",
           "message": {
@@ -204,6 +224,26 @@
                 "region": {
                   "startLine": 9,
                   "startColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "url-canparse",
+          "level": "note",
+          "message": {
+            "text": "URL.canParse() — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 45
                 }
               }
             }

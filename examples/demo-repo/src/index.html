@@ -6,7 +6,29 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <!-- 1) Popover attribute -->
     <button popover id="info">Info</button>
+
+    <!-- 2) Dialog element -->
+    <dialog id="myDialog">
+      <form method="dialog">
+        <p>Dialog content</p>
+        <button>Close</button>
+      </form>
+    </dialog>
+
+    <!-- 3) Import Maps -->
+    <script type="importmap">
+      {
+        "imports": {
+          "lodash": "https://cdn.skypack.dev/lodash-es"
+        }
+      }
+    </script>
+
+    <!-- 4) Lazy loading attribute -->
+    <img src="https://via.placeholder.com/300x200" loading="lazy" alt="Lazy" />
+    <iframe src="about:blank" loading="lazy"></iframe>
     <script type="module" src="./app.ts"></script>
   </body>
 </html>

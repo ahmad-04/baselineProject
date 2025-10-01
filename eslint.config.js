@@ -1,5 +1,5 @@
 // ESLint v9 flat config with optional TypeScript support.
-// 
+//
 // Locally (where extra devDeps might not be installed), this gracefully
 // falls back to JS-only rules. In CI, with devDeps installed, it enables
 // typescript-eslint with type-aware rules.
