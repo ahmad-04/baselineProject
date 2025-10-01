@@ -23,8 +23,8 @@ jobs:
                   node-version: "20"
                   cache: "npm"
 
-            - name: Install dependencies
-              run: npm ci
+            - name: Install dependencies (workspaces)
+              run: npm install --workspaces --include-workspace-root --no-audit --no-fund
 
             - name: Build monorepo
               run: npm run build
