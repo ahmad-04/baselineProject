@@ -45,14 +45,13 @@ jobs:
 
             - name: Build monorepo
               run: npm run build
-
             - name: Run Baseline Guard
               id: baseline
               uses: ./packages/action
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   path: examples/demo-repo
-                  generate-html-report: "false"
+                  generate-html-report: "true"
 
             - name: Upload HTML report (optional)
               if: always() && steps.baseline.outputs.html-report != ''
