@@ -281,8 +281,9 @@ export function tryDetectJsAst(
         );
       }
 
-      // Queue children
+      // Queue children (skip synthetic parent links to avoid cycles)
       for (const key of Object.keys(node)) {
+        if (key === "parent") continue;
         const val = (node as any)[key];
         if (val && typeof val === "object") {
           if (Array.isArray(val)) {
@@ -346,6 +347,7 @@ function collectUrlPatternAliases(root: any): Set<string> {
       aliases.add(node.left.name);
     }
     for (const key of Object.keys(node)) {
+      if (key === "parent") continue;
       const val = (node as any)[key];
       if (val && typeof val === "object") {
         if (Array.isArray(val)) {
@@ -363,6 +365,7 @@ function attachParents(root: any) {
     const node = stack.pop();
     if (!node || typeof node !== "object") continue;
     for (const key of Object.keys(node)) {
+      if (key === "parent") continue;
       const val = (node as any)[key];
       if (val && typeof val === "object") {
         if (Array.isArray(val)) {
@@ -437,6 +440,7 @@ function containsIdentifier(node: any, name: string): boolean {
 
 function scanChildren(node: any, fn: (n: any) => boolean): boolean {
   for (const key of Object.keys(node)) {
+    if (key === "parent") continue;
     const val = (node as any)[key];
     if (val && typeof val === "object") {
       if (Array.isArray(val)) {

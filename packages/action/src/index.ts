@@ -29,7 +29,7 @@ async function run() {
       ".html",
       ".htm",
     ];
-    if (token && ctx.payload.pull_request) {
+  if (token && ctx.payload.pull_request) {
       const octokit = github.getOctokit(token);
       const { owner, repo } = ctx.repo;
       const prNumber = ctx.payload.pull_request.number;
@@ -51,19 +51,32 @@ async function run() {
       const filtered = changed
         .filter((p) => p.startsWith(scanPath.replace(/\\/g, "/")))
         .filter((p) => allowed.some((ext) => p.endsWith(ext)));
-      if (filtered.length > 0) {
+      // Cap number of files to avoid huge CLI arg strings; fall back to full scan
+      if (filtered.length > 0 && filtered.length <= 200) {
         // comma-separated list; quote is added around whole string in command
         filesArg = ` --files "${filtered.join(",")}"`;
         core.info(`Diff-only mode with ${filtered.length} file(s).`);
       } else {
-        core.info("No relevant changed files detected; scanning full path.");
+        core.info(
+          filtered.length === 0
+            ? "No relevant changed files detected; scanning full path."
+            : `Too many changed files (${filtered.length}); scanning full path instead.`
+        );
       }
     }
 
-    const { stdout } = await pexec(
+    const { stdout, stderr } = await pexec(
       `node ./packages/cli/dist/index.js ${scanPath} --json --exit-zero${filesArg}`
     );
-    const report = JSON.parse(stdout);
+    let report: any;
+    try {
+      report = JSON.parse(stdout);
+    } catch (e) {
+      core.warning(
+        `Failed to parse CLI JSON output. stdout length=${stdout?.length}; stderr length=${stderr?.length}`
+      );
+      throw e;
+    }
     const findings: any[] = report.findings || [];
     const nonBaseline = findings.filter((f) => f.baseline !== "yes");
 

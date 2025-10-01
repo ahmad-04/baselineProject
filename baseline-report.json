@@ -4,14 +4,14 @@
       ">0.5% and not dead"
     ],
     "filesScanned": 5,
-    "generatedAt": "2025-10-01T12:56:53.401Z",
+    "generatedAt": "2025-10-01T13:54:04.541Z",
     "configPath": "C:\\Github_projects\\baselineProject\\baseline.config.json",
     "unsupportedThreshold": 10
   },
   "totals": {
-    "total": 33,
+    "total": 31,
     "nonBaseline": 14,
-    "safe": 19
+    "safe": 17
   },
   "findings": [
     {
@@ -37,33 +37,74 @@
       "severity": "info",
       "docsUrl": "https://developer.mozilla.org/docs/Web/API/structuredClone",
       "suggestion": "Prefer structuredClone over deep-clone utilities; guard if targeting older browsers.",
-      "guarded": false,
       "advice": "safe"
     },
     {
       "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
-      "line": 24,
-      "column": 19,
-      "featureId": "array-prototype-at",
-      "title": "Array.prototype.at()",
+      "line": 9,
+      "column": 34,
+      "featureId": "url-canparse",
+      "title": "URL.canParse()",
+      "baseline": "partial",
+      "severity": "info",
+      "docsUrl": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
+      "suggestion": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)",
+      "guarded": false,
+      "advice": "safe",
+      "unsupportedPercent": 0
+    },
+    {
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
+      "line": 12,
+      "column": 5,
+      "featureId": "navigator-share",
+      "title": "Web Share API",
       "baseline": "partial",
       "severity": "warn",
-      "docsUrl": "https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array/at",
-      "suggestion": "Fallback: use arr[index >= 0 ? index : arr.length + index] for negatives.",
+      "docsUrl": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
+      "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)",
       "guarded": false,
-      "advice": "needs-guard"
+      "advice": "needs-guard",
+      "unsupportedPercent": 18
+    },
+    {
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
+      "line": 17,
+      "column": 45,
+      "featureId": "url-canparse",
+      "title": "URL.canParse()",
+      "baseline": "partial",
+      "severity": "info",
+      "docsUrl": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
+      "suggestion": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)",
+      "guarded": false,
+      "advice": "safe",
+      "unsupportedPercent": 0
+    },
+    {
+      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
+      "line": 20,
+      "column": 3,
+      "featureId": "navigator-share",
+      "title": "Web Share API",
+      "baseline": "partial",
+      "severity": "warn",
+      "docsUrl": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
+      "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)",
+      "guarded": false,
+      "advice": "needs-guard",
+      "unsupportedPercent": 18
     },
     {
       "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
       "line": 24,
-      "column": 34,
+      "column": 31,
       "featureId": "array-prototype-at",
       "title": "Array.prototype.at()",
       "baseline": "partial",
       "severity": "warn",
       "docsUrl": "https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array/at",
       "suggestion": "Fallback: use arr[index >= 0 ? index : arr.length + index] for negatives.",
-      "guarded": false,
       "advice": "needs-guard"
     },
     {
@@ -76,7 +117,6 @@
       "severity": "warn",
       "docsUrl": "https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise/any",
       "suggestion": "Fallback: emulate with Promise.race on wrapped promises or a small polyfill.",
-      "guarded": false,
       "advice": "needs-guard"
     },
     {
@@ -89,7 +129,6 @@
       "severity": "warn",
       "docsUrl": "https://developer.mozilla.org/docs/Web/API/URL_Pattern_API",
       "suggestion": "Fallback: use the urlpattern-polyfill or Regex-based matching.",
-      "guarded": false,
       "advice": "needs-guard"
     },
     {
@@ -122,86 +161,16 @@
     },
     {
       "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
-      "line": 12,
-      "column": 5,
-      "featureId": "navigator-share",
-      "title": "Web Share API",
-      "baseline": "partial",
-      "severity": "info",
-      "docsUrl": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
-      "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)",
-      "guarded": true,
-      "advice": "guarded",
-      "unsupportedPercent": 18
-    },
-    {
-      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
-      "line": 19,
-      "column": 9,
-      "featureId": "navigator-share",
-      "title": "Web Share API",
-      "baseline": "partial",
-      "severity": "info",
-      "docsUrl": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
-      "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)",
-      "guarded": true,
-      "advice": "guarded",
-      "unsupportedPercent": 18
-    },
-    {
-      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
-      "line": 20,
+      "line": 53,
       "column": 3,
-      "featureId": "navigator-share",
-      "title": "Web Share API",
+      "featureId": "async-clipboard",
+      "title": "Async Clipboard API",
       "baseline": "partial",
       "severity": "info",
-      "docsUrl": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
-      "suggestion": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)",
-      "guarded": true,
-      "advice": "guarded",
-      "unsupportedPercent": 18
-    },
-    {
-      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
-      "line": 50,
-      "column": 10,
-      "featureId": "file-system-access-picker",
-      "title": "showOpenFilePicker()",
-      "baseline": "partial",
-      "severity": "warn",
-      "docsUrl": "https://developer.mozilla.org/docs/Web/API/window/showOpenFilePicker",
-      "suggestion": "Fallback: use <input type=\"file\"> when picker is unavailable.",
+      "docsUrl": "https://developer.mozilla.org/docs/Web/API/Clipboard_API",
+      "suggestion": "Guard: if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(...) } else { /* fallback */ }",
       "guarded": false,
-      "advice": "needs-guard"
-    },
-    {
-      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
-      "line": 9,
-      "column": 34,
-      "featureId": "url-canparse",
-      "title": "URL.canParse()",
-      "baseline": "partial",
-      "severity": "info",
-      "docsUrl": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
-      "suggestion": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)",
-      "guarded": true,
-      "advice": "guarded",
-      "unsupportedPercent": 0
-    },
-    {
-      "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",
-      "line": 17,
-      "column": 45,
-      "featureId": "url-canparse",
-      "title": "URL.canParse()",
-      "baseline": "partial",
-      "severity": "info",
-      "docsUrl": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
-      "suggestion": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)",
-      "guarded": false,
-      "advice": "safe",
-      "unsupportedPercent": 0
+      "advice": "safe"
     },
     {
       "file": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts",

@@ -31,10 +31,10 @@
     <h1>Baseline Adoption Report</h1>
     <div class="meta">
       Targets: &gt;0.5% and not dead
-       • Generated: 2025-09-22T13:05:37.949Z
+       • Generated: 2025-10-01T13:52:42.347Z
     </div>
     <div class="totals">
-      Total findings: 3 • Non-Baseline: 1 • Safe: 2
+      Total findings: 31 • Non-Baseline: 14 • Safe: 17
     </div>
     <div class="toolbar">
       <div class="group" id="advice-filters">
@@ -71,29 +71,253 @@
         </tr>
       </thead>
       <tbody id="rows">
-        <tr data-advice="needs-guard" data-unsupported="" data-feature="URLPattern" data-file="C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts">
+        <tr data-advice="needs-guard" data-unsupported="" data-feature="Popover attribute" data-file="C:/Github_projects/baselineProject/examples/demo-repo/baseline-report.html">
+  <td>Popover attribute</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/baseline-report.html:111</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Fallback: use &lt;dialog&gt; or a custom popover component.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Popover_API" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="structuredClone()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>structuredClone()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:4</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Prefer structuredClone over deep-clone utilities; guard if targeting older browsers.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/structuredClone" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="0" data-feature="URL.canParse()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>URL.canParse()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:9</code></td>
+  <td>Safe to adopt</td>
+    <td>0%</td>
+  <td>Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/URL/canParse_static" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="18" data-feature="Web Share API" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>Web Share API</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:12</code></td>
+  <td>Needs guard</td>
+    <td>18%</td>
+  <td>Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Navigator/share" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="0" data-feature="URL.canParse()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>URL.canParse()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:17</code></td>
+  <td>Safe to adopt</td>
+    <td>0%</td>
+  <td>Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/URL/canParse_static" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="18" data-feature="Web Share API" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>Web Share API</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:20</code></td>
+  <td>Needs guard</td>
+    <td>18%</td>
+  <td>Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Navigator/share" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="Array.prototype.at()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>Array.prototype.at()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:24</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Fallback: use arr[index &gt;= 0 ? index : arr.length + index] for negatives.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array/at" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="Promise.any()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>Promise.any()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:27</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Fallback: emulate with Promise.race on wrapped promises or a small polyfill.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise/any" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="URLPattern" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
   <td>URLPattern</td>
-  <td><code>C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts:226</code></td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:33</code></td>
   <td>Needs guard</td>
     <td></td>
   <td>Fallback: use the urlpattern-polyfill or Regex-based matching.</td>
   <td><a href="https://developer.mozilla.org/docs/Web/API/URL_Pattern_API" target="_blank" rel="noreferrer noopener">Docs</a></td>
 </tr>
-<tr data-advice="guarded" data-unsupported="24" data-feature="View Transitions API" data-file="C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts">
+<tr data-advice="needs-guard" data-unsupported="22" data-feature="View Transitions API" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
   <td>View Transitions API</td>
-  <td><code>C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts:222</code></td>
-  <td>Guarded</td>
-    <td>24%</td>
-  <td>Guard: if (&#39;startViewTransition&#39; in document) { ... } else { ... } (about 24% of your targets may lack support)</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:38</code></td>
+  <td>Needs guard</td>
+    <td>22%</td>
+  <td>Guard: if (&#39;startViewTransition&#39; in document) { ... } else { ... } (about 22% of your targets may lack support)</td>
   <td><a href="https://developer.mozilla.org/docs/Web/API/Document/startViewTransition" target="_blank" rel="noreferrer noopener">Docs</a></td>
 </tr>
-<tr data-advice="guarded" data-unsupported="18" data-feature="Web Share API" data-file="C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts">
-  <td>Web Share API</td>
-  <td><code>C:/Github_projects/baselineProject/packages/vscode-extension/src/extension.ts:218</code></td>
-  <td>Guarded</td>
-    <td>18%</td>
-  <td>Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)</td>
-  <td><a href="https://developer.mozilla.org/docs/Web/API/Navigator/share" target="_blank" rel="noreferrer noopener">Docs</a></td>
+<tr data-advice="needs-guard" data-unsupported="22" data-feature="View Transitions API" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>View Transitions API</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:44</code></td>
+  <td>Needs guard</td>
+    <td>22%</td>
+  <td>Guard: if (&#39;startViewTransition&#39; in document) { ... } else { ... } (about 22% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Document/startViewTransition" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="Async Clipboard API" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>Async Clipboard API</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:53</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Guard: if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(...) } else { /* fallback */ }</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Clipboard_API" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="Async Clipboard API" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts">
+  <td>Async Clipboard API</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts:55</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Guard: if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(...) } else { /* fallback */ }</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Clipboard_API" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="Popover attribute" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/index.html">
+  <td>Popover attribute</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/index.html:10</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Fallback: use &lt;dialog&gt; or a custom popover component.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/API/Popover_API" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="&lt;dialog&gt; element" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/index.html">
+  <td>&lt;dialog&gt; element</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/index.html:13</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Provide a dialog polyfill or non-modal fallback when unsupported; ensure accessible focus management.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/HTML/Element/dialog" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="Import Maps" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/index.html">
+  <td>Import Maps</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/index.html:21</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Guard or provide bundler fallback for environments without native import maps.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/HTML/Element/script/type/importmap" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="Lazy loading attribute" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/index.html">
+  <td>Lazy loading attribute</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/index.html:30</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Use for non-critical images/iframes; set hero media to eager to protect LCP.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/HTML/Element/img#attr-loading" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="Lazy loading attribute" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/index.html">
+  <td>Lazy loading attribute</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/index.html:31</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Use for non-critical images/iframes; set hero media to eager to protect LCP.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/HTML/Element/img#attr-loading" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="CSS :has()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS :has()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:3</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/:has" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="CSS :has()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS :has()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:4</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/:has" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="24" data-feature="CSS text-wrap: balance" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS text-wrap: balance</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:8</code></td>
+  <td>Needs guard</td>
+    <td>24%</td>
+  <td>Use progressive enhancement; avoid relying on balance for critical layout; provide reasonable default wrapping. (about 24% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/text-wrap" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="24" data-feature="CSS text-wrap: balance" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS text-wrap: balance</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:11</code></td>
+  <td>Needs guard</td>
+    <td>24%</td>
+  <td>Use progressive enhancement; avoid relying on balance for critical layout; provide reasonable default wrapping. (about 24% of your targets may lack support)</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/text-wrap" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="CSS color-mix()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS color-mix()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:14</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Provide fallback colors or precomputed values when color-mix() is unsupported.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/color_value/color-mix" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="CSS color-mix()" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS color-mix()</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:16</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Provide fallback colors or precomputed values when color-mix() is unsupported.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/color_value/color-mix" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="CSS Nesting" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS Nesting</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:24</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Use PostCSS Nesting or target supported environments.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/CSS_nesting" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature=":modal pseudo-class" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>:modal pseudo-class</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:30</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Guard UI for browsers without &lt;dialog&gt; modal support; provide non-modal fallback.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/:modal" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature=":modal pseudo-class" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>:modal pseudo-class</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:31</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Guard UI for browsers without &lt;dialog&gt; modal support; provide non-modal fallback.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/:modal" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="safe" data-unsupported="" data-feature="CSS Container Queries" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS Container Queries</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:36</code></td>
+  <td>Safe to adopt</td>
+    <td></td>
+  <td>Provide responsive fallbacks using media queries when container queries are unsupported.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/CSS_container_queries" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="CSS oklch()/oklab() colors" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS oklch()/oklab() colors</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:5</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Provide fallback colors or color-mix() alternatives when unsupported.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/color_value/oklch" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="CSS oklch()/oklab() colors" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS oklch()/oklab() colors</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:44</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Provide fallback colors or color-mix() alternatives when unsupported.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/color_value/oklch" target="_blank" rel="noreferrer noopener">Docs</a></td>
+</tr>
+<tr data-advice="needs-guard" data-unsupported="" data-feature="CSS oklch()/oklab() colors" data-file="C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css">
+  <td>CSS oklch()/oklab() colors</td>
+  <td><code>C:/Github_projects/baselineProject/examples/demo-repo/src/styles.css:47</code></td>
+  <td>Needs guard</td>
+    <td></td>
+  <td>Provide fallback colors or color-mix() alternatives when unsupported.</td>
+  <td><a href="https://developer.mozilla.org/docs/Web/CSS/color_value/oklch" target="_blank" rel="noreferrer noopener">Docs</a></td>
 </tr>
       </tbody>
     </table>

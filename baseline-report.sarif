@@ -36,6 +36,34 @@
               }
             },
             {
+              "id": "url-canparse",
+              "name": "URL.canParse()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
+              "shortDescription": {
+                "text": "URL.canParse()"
+              },
+              "fullDescription": {
+                "text": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "navigator-share",
+              "name": "Web Share API",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
+              "shortDescription": {
+                "text": "Web Share API"
+              },
+              "fullDescription": {
+                "text": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
               "id": "array-prototype-at",
               "name": "Array.prototype.at()",
               "helpUri": "https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array/at",
@@ -86,48 +114,6 @@
               },
               "fullDescription": {
                 "text": "Guard: if ('startViewTransition' in document) { ... } else { ... } (about 22% of your targets may lack support)"
-              },
-              "properties": {
-                "baseline": "partial"
-              }
-            },
-            {
-              "id": "navigator-share",
-              "name": "Web Share API",
-              "helpUri": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
-              "shortDescription": {
-                "text": "Web Share API"
-              },
-              "fullDescription": {
-                "text": "Guard: if (navigator.share) { await navigator.share(...) } else { fallback } (about 18% of your targets may lack support)"
-              },
-              "properties": {
-                "baseline": "partial"
-              }
-            },
-            {
-              "id": "file-system-access-picker",
-              "name": "showOpenFilePicker()",
-              "helpUri": "https://developer.mozilla.org/docs/Web/API/window/showOpenFilePicker",
-              "shortDescription": {
-                "text": "showOpenFilePicker()"
-              },
-              "fullDescription": {
-                "text": "Fallback: use <input type=\"file\"> when picker is unavailable."
-              },
-              "properties": {
-                "baseline": "partial"
-              }
-            },
-            {
-              "id": "url-canparse",
-              "name": "URL.canParse()",
-              "helpUri": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
-              "shortDescription": {
-                "text": "URL.canParse()"
-              },
-              "fullDescription": {
-                "text": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)"
               },
               "properties": {
                 "baseline": "partial"
@@ -332,10 +318,10 @@
           ]
         },
         {
-          "ruleId": "array-prototype-at",
-          "level": "warning",
+          "ruleId": "url-canparse",
+          "level": "note",
           "message": {
-            "text": "Array.prototype.at() — needs-guard"
+            "text": "URL.canParse() — safe"
           },
           "locations": [
             {
@@ -344,8 +330,68 @@
                   "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
                 },
                 "region": {
-                  "startLine": 24,
-                  "startColumn": 19
+                  "startLine": 9,
+                  "startColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "navigator-share",
+          "level": "warning",
+          "message": {
+            "text": "Web Share API — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 12,
+                  "startColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "url-canparse",
+          "level": "note",
+          "message": {
+            "text": "URL.canParse() — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 17,
+                  "startColumn": 45
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "navigator-share",
+          "level": "warning",
+          "message": {
+            "text": "Web Share API — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 20,
+                  "startColumn": 3
                 }
               }
             }
@@ -365,7 +411,7 @@
                 },
                 "region": {
                   "startLine": 24,
-                  "startColumn": 34
+                  "startColumn": 31
                 }
               }
             }
@@ -452,110 +498,10 @@
           ]
         },
         {
-          "ruleId": "navigator-share",
-          "level": "warning",
-          "message": {
-            "text": "Web Share API — guarded"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
-                },
-                "region": {
-                  "startLine": 12,
-                  "startColumn": 5
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "navigator-share",
-          "level": "warning",
-          "message": {
-            "text": "Web Share API — guarded"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
-                },
-                "region": {
-                  "startLine": 19,
-                  "startColumn": 9
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "navigator-share",
-          "level": "warning",
-          "message": {
-            "text": "Web Share API — guarded"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
-                },
-                "region": {
-                  "startLine": 20,
-                  "startColumn": 3
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "file-system-access-picker",
-          "level": "warning",
-          "message": {
-            "text": "showOpenFilePicker() — needs-guard"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
-                },
-                "region": {
-                  "startLine": 50,
-                  "startColumn": 10
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "url-canparse",
-          "level": "warning",
-          "message": {
-            "text": "URL.canParse() — guarded"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
-                },
-                "region": {
-                  "startLine": 9,
-                  "startColumn": 34
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "url-canparse",
+          "ruleId": "async-clipboard",
           "level": "note",
           "message": {
-            "text": "URL.canParse() — safe"
+            "text": "Async Clipboard API — safe"
           },
           "locations": [
             {
@@ -564,8 +510,8 @@
                   "uri": "C:/Github_projects/baselineProject/examples/demo-repo/src/app.ts"
                 },
                 "region": {
-                  "startLine": 17,
-                  "startColumn": 45
+                  "startLine": 53,
+                  "startColumn": 3
                 }
               }
             }

@@ -479,14 +479,24 @@ async function main() {
     }
   }
 
-  const fileRefs: FileRef[] = [];
   const perFileFindings: any[] = [];
   const contentHashByPath = new Map<string, string>();
-  for (const p of files) {
-    const content = await fs.readFile(p, "utf8");
-    fileRefs.push({ path: p, content });
-    const h = crypto.createHash("sha1").update(content).digest("hex");
-    contentHashByPath.set(p.replace(/\\/g, "/"), h);
+  // Read files in small batches to reduce peak memory
+  const BATCH_SIZE = 200;
+  const fileRefsBatches: FileRef[][] = [];
+  {
+    let cur: FileRef[] = [];
+    for (const p of files) {
+      const content = await fs.readFile(p, "utf8");
+      const h = crypto.createHash("sha1").update(content).digest("hex");
+      contentHashByPath.set(p.replace(/\\/g, "/"), h);
+      cur.push({ path: p, content });
+      if (cur.length >= BATCH_SIZE) {
+        fileRefsBatches.push(cur);
+        cur = [];
+      }
+    }
+    if (cur.length) fileRefsBatches.push(cur);
   }
   const cfgTargets = Array.isArray(cfg?.targets)
     ? (cfg?.targets as string[])
@@ -505,7 +515,8 @@ async function main() {
       configHash,
       byFile: {},
     } as CacheShape;
-    for (const ref of fileRefs) {
+    for (const batch of fileRefsBatches) {
+      for (const ref of batch) {
       try {
         const stat = await (await import("node:fs/promises")).stat(ref.path);
         const mtimeMs = stat.mtimeMs;
@@ -524,29 +535,34 @@ async function main() {
             ...f,
             file: ref.path,
           }));
-          findings.push(...reused);
+            findings.push(...reused);
           updatedCache.byFile[key] = prev;
-          continue;
+            continue;
+          }
+          const res = analyze([{ path: ref.path, content: ref.content }], {
+            targets,
+          });
+          findings.push(...res);
+          updatedCache.byFile[key] = {
+            mtimeMs,
+            contentHash: currHash,
+            result: res,
+          };
+        } catch {
+          const res = analyze([{ path: ref.path, content: ref.content }], {
+            targets,
+          });
+          findings.push(...res);
         }
-        const res = analyze([{ path: ref.path, content: ref.content }], {
-          targets,
-        });
-        findings.push(...res);
-        updatedCache.byFile[key] = {
-          mtimeMs,
-          contentHash: currHash,
-          result: res,
-        };
-      } catch {
-        const res = analyze([{ path: ref.path, content: ref.content }], {
-          targets,
-        });
-        findings.push(...res);
       }
     }
     cache = updatedCache;
   } else {
-    findings = analyze(fileRefs, { targets }) as any[];
+    // Analyze in batches to bound memory
+    for (const batch of fileRefsBatches) {
+      const res = analyze(batch, { targets }) as any[];
+      findings.push(...res);
+    }
   }
   // Apply unsupported threshold: reclassify needs-guard -> safe if <= threshold
   const threshold =
