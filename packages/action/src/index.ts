@@ -147,9 +147,10 @@ async function run() {
     summaryLines.push("");
     summaryLines.push(...tableHeader, ...tableRows);
     if (nonBaseline.length > TOP_N) {
-      summaryLines.push(
-        `\n…plus ${nonBaseline.length - TOP_N} more. Consider enabling the HTML report for full details.`
-      );
+      const moreMsg = generateHtml
+        ? `\n…plus ${nonBaseline.length - TOP_N} more. See HTML report for full details.`
+        : `\n…plus ${nonBaseline.length - TOP_N} more. Consider enabling the HTML report for full details.`;
+      summaryLines.push(moreMsg);
     }
 
     core.summary.addHeading("Baseline Guard");
