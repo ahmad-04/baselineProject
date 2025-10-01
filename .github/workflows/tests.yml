@@ -26,5 +26,7 @@ jobs:
         run: npm ci || npm i
       - name: Build
         run: npm run build
+      - name: Lint (flat config)
+        run: npm run lint --silent || npm run lint --silent
       - name: Run tests
         run: npm test --silent

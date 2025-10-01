@@ -21,7 +21,8 @@
     "build": "npm run build:core && npm run build:helpers && npm run build:cli && npm run build:action && npm run build:eslint && npm run build:lsp && npm run build:vscode",
     "test": "npm run build && npm --prefix packages/core run test && npm --prefix packages/cli run test && npm --prefix packages/action run test && npm --prefix packages/eslint-plugin-baseline run test",
     "format": "prettier --write .",
-    "lint": "eslint . --ext .ts,.tsx,.js",
+  "lint": "eslint .",
+  "lint:fix": "eslint . --fix",
     "clean": "rimraf packages/**/dist packages/**/node_modules",
     "release:version": "changeset version && npm i --package-lock-only",
     "release:publish": "npm -w packages/core publish --access public && npm -w packages/helpers publish --access public && npm -w packages/cli publish --access public && npm -w packages/eslint-plugin-baseline publish --access public",
@@ -36,7 +37,5 @@
     "rimraf": "^5.0.5",
     "typescript": "^5.5.4"
   },
-  "dependencies": {
-    "baseline-demo-repo": "^0.0.0"
-  }
+  "dependencies": {}
 }
