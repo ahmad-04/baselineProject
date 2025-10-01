@@ -45,16 +45,25 @@ jobs:
           -w packages/vscode-extension
       - name: Build
         run: npm run build
-      - name: Create Release PR or Publish
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
+      - name: Create Release PR or Publish (using PAT)
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true') && secrets.CHANGESETS_TOKEN != '' }}
         uses: changesets/action@v1
         with:
           publish: npm run release:publish
           version: npm run release:version
         env:
-          # To allow PR creation when org policy blocks the Actions bot,
-          # create a repo/org secret CHANGESETS_TOKEN (classic PAT with repo scope)
-          # and replace the line below with:  GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
+          # Uses a classic PAT with repo scope to bypass org policy blocking the Actions bot
+          GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create Release PR or Publish (fallback to GITHUB_TOKEN)
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true') && secrets.CHANGESETS_TOKEN == '' }}
+        uses: changesets/action@v1
+        with:
+          publish: npm run release:publish
+          version: npm run release:version
+        env:
+          # May fail if org policy blocks the Actions bot from creating PRs
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
