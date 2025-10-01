@@ -216,6 +216,52 @@ Workflow snippet:
     sarif_file: examples/demo-repo/baseline-report.sarif
 ```
 
+### Use in other repositories
+
+You can consume this Action from any repo by referencing this repository and the `packages/action` path at a tag:
+
+```yaml
+name: Baseline Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Baseline Guard summary + reports
+        uses: ahmad-04/baselineProject/packages/action@action-v0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+          generate-html-report: true
+          generate-sarif-report: true
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-html-report
+          path: baseline-report.html
+      - name: Upload SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: baseline-report.sarif
+```
+
+Notes:
+- The `@action-v0` tag is a moving major tag you can update when releasing. Consumers may also pin to a specific tag like `@action-v0.1.0` or a commit SHA.
+- The Action invokes the published CLI via `npx @baseline-tools/cli`.
+
 ## Configuration
 
 Create a `baseline.config.json` at the repo root (or pass with `--config`). All tools (CLI, ESLint rule, VS Code extension) look up from the current file/scan path and honor these settings.

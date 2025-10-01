@@ -14,3 +14,6 @@ coverage/
 # Builds
 packages/**/dist/
 examples/**/dist/
+
+# Include action dist for GitHub Actions consumers
+!packages/action/dist/
