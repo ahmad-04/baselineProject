@@ -19,6 +19,15 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+      - name: Upgrade npm
+        run: |
+          npm --version
+          npm i -g npm@latest
+          npm --version
+      - name: Ensure workspaces enabled
+        run: |
+          npm config set workspaces true
+          npm config get workspaces
       - name: Install deps (root)
         run: npm install --no-audit --no-fund
 
