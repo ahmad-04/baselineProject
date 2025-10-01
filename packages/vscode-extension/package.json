@@ -16,6 +16,19 @@
     "Linters",
     "Other"
   ],
+  "keywords": [
+    "baseline",
+    "web platform",
+    "web-features",
+    "browserslist",
+    "compatibility",
+    "diagnostics",
+    "quick fix"
+  ],
+  "galleryBanner": {
+    "color": "#0b0d12",
+    "theme": "dark"
+  },
   "activationEvents": [
     "onStartupFinished",
     "onLanguage:javascript",
