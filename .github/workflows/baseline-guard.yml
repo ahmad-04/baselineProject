@@ -1,62 +1,62 @@
 name: Baseline Guard
 
 on:
-    push:
-        branches: [main]
-    pull_request:
-        branches: [main]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
-    contents: read
-    pull-requests: write
+  contents: read
+  pull-requests: write
 
 jobs:
-    scan:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "20"
-                  cache: "npm"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
-            - name: Upgrade npm
-              run: |
-                  npm --version
-                  npm i -g npm@latest
-                  npm --version
+      - name: Upgrade npm
+        run: |
+          npm --version
+          npm i -g npm@latest
+          npm --version
 
-            - name: Install dependencies (root)
-              run: npm install --no-audit --no-fund
+      - name: Install dependencies (root)
+        run: npm install --no-audit --no-fund
 
-            - name: Install workspace packages explicitly
-              run: >-
-                  npm install --no-audit --no-fund
-                  -w packages/core
-                  -w packages/helpers
-                  -w packages/cli
-                  -w packages/action
-                  -w packages/eslint-plugin-baseline
-                  -w packages/lsp-server
-                  -w packages/vscode-extension
+      - name: Install workspace packages explicitly
+        run: >-
+          npm install --no-audit --no-fund
+          -w packages/core
+          -w packages/helpers
+          -w packages/cli
+          -w packages/action
+          -w packages/eslint-plugin-baseline
+          -w packages/lsp-server
+          -w packages/vscode-extension
 
-            - name: Build monorepo
-              run: npm run build
-            - name: Run Baseline Guard
-              id: baseline
-              uses: ./packages/action
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  path: examples/demo-repo
-                  generate-html-report: "true"
+      - name: Build monorepo
+        run: npm run build
+      - name: Run Baseline Guard
+        id: baseline
+        uses: ./packages/action
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: examples/demo-repo
+          generate-html-report: "true"
 
-            - name: Upload HTML report (optional)
-              if: always() && steps.baseline.outputs.html-report != ''
-              uses: actions/upload-artifact@v4
-              with:
-                  name: baseline-report
-                  path: ${{ steps.baseline.outputs.html-report }}
-                  if-no-files-found: ignore
+      - name: Upload HTML report (optional)
+        if: always() && steps.baseline.outputs.html-report != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: baseline-report
+          path: ${{ steps.baseline.outputs.html-report }}
+          if-no-files-found: ignore
