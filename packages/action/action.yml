@@ -20,6 +20,19 @@ inputs:
     description: "Path/filename for the HTML report"
     required: false
     default: "baseline-report.html"
+  generate-sarif-report:
+    description: "Generate a SARIF report for GitHub Code Scanning"
+    required: false
+    default: "true"
+  report-sarif-path:
+    description: "Path/filename for the SARIF report"
+    required: false
+    default: "baseline-report.sarif"
 runs:
   using: "node20"
   main: "dist/index.js"
+outputs:
+  html-report:
+    description: "Path of the generated HTML report (if any)"
+  sarif-report:
+    description: "Path of the generated SARIF report (if any)"

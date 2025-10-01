@@ -14,6 +14,11 @@ async function run() {
       "false";
     const htmlReportPath =
       core.getInput("report-html-path") || "baseline-report.html";
+    const generateSarif =
+      (core.getInput("generate-sarif-report") || "false").toLowerCase() !==
+      "false";
+    const sarifReportPath =
+      core.getInput("report-sarif-path") || "baseline-report.sarif";
     core.info(`Preparing Baseline scan on: ${scanPath}`);
 
     // Compute changed files for PRs and filter to our target path and extensions
@@ -158,6 +163,12 @@ async function run() {
       summaryLines.push(
         `\nHTML report: ${htmlReportPath} (see workflow Artifacts)`
       );
+    }
+    if (generateSarif) {
+      const cmdSarif = `node ./packages/cli/dist/index.js ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
+      core.info(`Generating SARIF report: ${sarifReportPath}`);
+      await pexec(cmdSarif);
+      core.setOutput("sarif-report", sarifReportPath);
     }
     await core.summary.write();
 

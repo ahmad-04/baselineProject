@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  security-events: write
 
 jobs:
   scan:
@@ -60,3 +61,9 @@ jobs:
           name: baseline-report
           path: ${{ steps.baseline.outputs.html-report }}
           if-no-files-found: ignore
+
+      - name: Upload SARIF to code scanning
+        if: always() && steps.baseline.outputs.sarif-report != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.baseline.outputs.sarif-report }}
