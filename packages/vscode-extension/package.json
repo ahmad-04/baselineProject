@@ -9,6 +9,10 @@
     "type": "git",
     "url": "https://github.com/ahmad-04/baselineProject.git"
   },
+  "bugs": {
+    "url": "https://github.com/ahmad-04/baselineProject/issues"
+  },
+  "homepage": "https://github.com/ahmad-04/baselineProject/tree/main/packages/vscode-extension",
   "engines": {
     "vscode": "^1.84.0"
   },
@@ -94,7 +98,11 @@
   },
   "scripts": {
     "build": "rimraf dist && npx tsc -p tsconfig.json",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "publish": "node scripts/publish.cjs",
+    "publish:patch": "node scripts/publish.cjs patch",
+    "publish:minor": "node scripts/publish.cjs minor",
+    "publish:major": "node scripts/publish.cjs major"
   },
   "files": [
     "dist/**",
