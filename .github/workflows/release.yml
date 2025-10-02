@@ -50,6 +50,8 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "whoami: $(npm whoami || echo 'unauthenticated')"
+          npm config get registry
+          npm config get @baseline-tools:registry || true
           npm ping || true
       - name: Create Release PR or Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}

@@ -1,11 +1,17 @@
 {
-  "name": "@baseline-tools/lsp-server",
+  "name": "baseline-tools-lsp-server",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "main": "dist/server.js",
   "types": "dist/server.d.ts",
   "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Language Server Protocol server for Baseline Guardrails (diagnostics, hovers, code actions)",
   "scripts": {
     "build": "tsc -p tsconfig.json",
