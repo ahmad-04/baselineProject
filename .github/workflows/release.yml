@@ -45,6 +45,12 @@ jobs:
           -w packages/vscode-extension
       - name: Build
         run: npm run build
+      - name: NPM auth preflight
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "whoami: $(npm whoami || echo 'unauthenticated')"
+          npm ping || true
       - name: Create Release PR or Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
         uses: changesets/action@v1

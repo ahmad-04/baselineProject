@@ -6,6 +6,9 @@
   "description": "Tiny capability checks for Baseline guards (share, canParse, view transitions, file picker).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
