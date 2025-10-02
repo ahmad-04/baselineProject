@@ -66,7 +66,7 @@ async function run() {
                     : `Too many changed files (${filtered.length}); scanning full path instead.`);
             }
         }
-    const { stdout, stderr } = await pexec(`npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`);
+        const { stdout, stderr } = await pexec(`npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`);
         let report;
         try {
             report = JSON.parse(stdout);
