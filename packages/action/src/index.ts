@@ -74,9 +74,21 @@ async function run() {
     let stdout: string;
     let stderr: string;
     try {
-      ({ stdout, stderr } = await pexec(
-        `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
-      ));
+      // Try multiple package names in case any of them are published
+      try {
+        ({ stdout, stderr } = await pexec(
+          `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
+        ));
+      } catch {
+        try {
+          ({ stdout, stderr } = await pexec(
+            `npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
+          ));
+        } catch {
+          // Fall back to local CLI
+          throw new Error("Need to use local CLI");
+        }
+      }
     } catch {
       const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
       ({ stdout, stderr } = await pexec(
@@ -167,8 +179,17 @@ async function run() {
     if (generateHtml) {
       core.info(`Generating HTML report: ${htmlReportPath}`);
       try {
-        const cmd = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
-        await pexec(cmd);
+        try {
+          const cmd = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
+          await pexec(cmd);
+        } catch {
+          try {
+            const cmd = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
+            await pexec(cmd);
+          } catch {
+            throw new Error("Need to use local CLI");
+          }
+        }
       } catch {
         const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
         const cmd = `${process.execPath} ${localCli} ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
@@ -183,8 +204,17 @@ async function run() {
     if (generateSarif) {
       core.info(`Generating SARIF report: ${sarifReportPath}`);
       try {
-        const cmdSarif = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
-        await pexec(cmdSarif);
+        try {
+          const cmdSarif = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
+          await pexec(cmdSarif);
+        } catch {
+          try {
+            const cmdSarif = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
+            await pexec(cmdSarif);
+          } catch {
+            throw new Error("Need to use local CLI");
+          }
+        }
       } catch {
         const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
         const cmdSarif = `${process.execPath} ${localCli} ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;

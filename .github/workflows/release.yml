@@ -49,13 +49,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "npmrc contents:"
-          cat /home/runner/work/_temp/.npmrc || true
-          echo "whoami: $(npm whoami || echo 'unauthenticated')"
-          npm config get registry
-          npm config get @whoisahmad:registry || true
-          npm token list || echo "Unable to list tokens"
-          npm ping || true
+          echo "Skipping npm auth check for now. We're not publishing packages."
+          echo "Registry: $(npm config get registry)"
       - name: Create Release PR or Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
         uses: changesets/action@v1

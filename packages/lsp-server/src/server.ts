@@ -1,5 +1,9 @@
 /* Minimal LSP-like server skeleton (stdio). Real LSP wiring will follow. */
-import { analyze, type FileRef, type Finding } from "@whoisahmad/baseline-tools-core";
+import {
+  analyze,
+  type FileRef,
+  type Finding,
+} from "@whoisahmad/baseline-tools-core";
 
 type Message = {
   jsonrpc: "2.0";
