@@ -19,7 +19,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "baseline-tools-core": "file:../core",
+    "baseline-tools-core": "^0.0.0",
     "globby": "^14.0.2",
     "ignore": "^5.3.1",
     "picocolors": "^1.0.0",

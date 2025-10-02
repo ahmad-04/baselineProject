@@ -19,7 +19,7 @@
     "eslint": ">=8"
   },
   "dependencies": {
-    "baseline-tools-core": "file:../core"
+    "baseline-tools-core": "^0.0.0"
   },
   "devDependencies": {
     "eslint": "^9.9.0",
