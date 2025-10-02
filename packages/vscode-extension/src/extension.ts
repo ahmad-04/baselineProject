@@ -15,7 +15,7 @@ let analyze: (
 ) => any[] = () => [];
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  ({ analyze } = require("@baseline-tools/core"));
+  ({ analyze } = require("baseline-tools-core"));
 } catch {
   try {
     // Fallback to bundled copy: dist/core-dist/index.js (copied during packaging)

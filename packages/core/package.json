@@ -1,5 +1,5 @@
 {
-  "name": "@baseline-tools/core",
+  "name": "baseline-tools-core",
   "version": "0.0.0",
   "type": "module",
   "main": "dist/index.js",

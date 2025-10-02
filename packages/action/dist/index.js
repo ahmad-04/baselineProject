@@ -66,7 +66,7 @@ async function run() {
                     : `Too many changed files (${filtered.length}); scanning full path instead.`);
             }
         }
-        const { stdout, stderr } = await pexec(`npx -y @baseline-tools/cli ${scanPath} --json --exit-zero${filesArg}`);
+    const { stdout, stderr } = await pexec(`npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`);
         let report;
         try {
             report = JSON.parse(stdout);
@@ -134,7 +134,7 @@ async function run() {
         core.summary.addHeading("Baseline Guard");
         core.summary.addRaw(summaryLines.join("\n"));
         if (generateHtml) {
-            const cmd = `npx -y @baseline-tools/cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
+            const cmd = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
             core.info(`Generating HTML report: ${htmlReportPath}`);
             await pexec(cmd);
             core.setOutput("html-report", htmlReportPath);
@@ -142,7 +142,7 @@ async function run() {
             summaryLines.push(`\nHTML report: ${htmlReportPath} (see workflow Artifacts)`);
         }
         if (generateSarif) {
-            const cmdSarif = `npx -y @baseline-tools/cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
+            const cmdSarif = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
             core.info(`Generating SARIF report: ${sarifReportPath}`);
             await pexec(cmdSarif);
             core.setOutput("sarif-report", sarifReportPath);

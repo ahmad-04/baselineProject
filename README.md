@@ -4,11 +4,11 @@
 
 Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Code, and GitHub PR comments, all powered by a shared core analyzer.
 
-- Core: `@baseline-tools/core` — regex-based detectors for modern web features, advice/guard flags, target-aware hints.
+- Core: `baseline-tools-core` — regex-based detectors for modern web features, advice/guard flags, target-aware hints.
 - CLI: `baseline-scan` — pretty/JSON output, HTML adoption report, diff-only scanning.
 - ESLint: `eslint-plugin-baseline` — rule `baseline/no-nonbaseline` with suggestions, guard‑aware suppression.
 - VS Code: `baseline-guardrails-vscode` — diagnostics, hover, quick fixes, status bar, scan toggle, and Targets/Threshold picker.
-- Action: `@baseline-tools/action` — compact PR summary (top findings), optional HTML report artifact, and SARIF output.
+- Action: `baseline-tools-action` — compact PR summary (top findings), optional HTML report artifact, and SARIF output.
 - SARIF: CLI/Action can emit SARIF 2.1.0 for GitHub Code Scanning.
 
 ## Features
@@ -152,7 +152,7 @@ Screenshots:
 
 ## Helpers
 
-Package: `@baseline-tools/helpers`
+Package: `baseline-tools-helpers`
 
 - `canShare()`: checks `navigator.share` availability
 - `canParseUrl(url)`: uses `URL.canParse` when available, falls back to `new URL()`
@@ -162,7 +162,7 @@ Package: `@baseline-tools/helpers`
 Example:
 
 ```ts
-import { canShare } from "@baseline-tools/helpers";
+import { canShare } from "baseline-tools-helpers";
 
 async function sharePage() {
   if (canShare()) {
@@ -261,7 +261,7 @@ jobs:
 Notes:
 
 - The `@action-v0` tag is a moving major tag you can update when releasing. Consumers may also pin to a specific tag like `@action-v0.1.0` or a commit SHA.
-- The Action invokes the published CLI via `npx @baseline-tools/cli`.
+- The Action invokes the published CLI via `npx baseline-tools-cli`.
 
 ## Configuration
 

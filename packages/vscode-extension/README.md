@@ -25,6 +25,6 @@ Inline diagnostics and quick fixes for non‑Baseline web features, powered by a
 ## Notes
 
 - Quick fixes aim to be self-contained. If you prefer using `@baseline-tools/helpers`, install it yourself:
-  npm i -S @baseline-tools/helpers
+  npm i -S baseline-tools-helpers
 
 For full docs, screenshots, and CLI/SARIF usage, see the repo README.

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import pc from "picocolors";
 import { readPackageUp } from "read-pkg-up";
-import { analyze, type FileRef } from "@baseline-tools/core";
+import { analyze, type FileRef } from "baseline-tools-core";
 import { globby } from "globby";
 import fs from "node:fs/promises";
 import path from "node:path";
