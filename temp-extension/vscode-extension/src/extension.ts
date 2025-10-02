@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { analyze, type FileRef } from "baseline-tools-core";
+import { analyze, type FileRef } from "@whoisahmad/baseline-tools-core";
 import { spawn, ChildProcessWithoutNullStreams } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";

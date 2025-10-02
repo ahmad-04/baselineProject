@@ -1,6 +1,6 @@
 import type { Rule } from "eslint";
 import type { SourceCode } from "eslint";
-import { analyze, type FileRef } from "baseline-tools-core";
+import { analyze, type FileRef } from "@whoisahmad/baseline-tools-core";
 import fs from "node:fs";
 import path from "node:path";
 
