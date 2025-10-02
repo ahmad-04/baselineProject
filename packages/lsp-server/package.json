@@ -1,5 +1,5 @@
 {
-  "name": "baseline-tools-lsp-server",
+  "name": "@whoisahmad/baseline-tools-lsp-server",
   "version": "0.0.0",
   "private": false,
   "type": "module",
@@ -18,7 +18,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-    "baseline-tools-core": "^0.0.0"
+    "@whoisahmad/baseline-tools-core": "^0.0.0"
   },
   "devDependencies": {
     "typescript": "^5.5.4",

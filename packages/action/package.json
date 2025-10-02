@@ -1,5 +1,5 @@
 {
-  "name": "baseline-tools-action",
+  "name": "@whoisahmad/baseline-tools-action",
   "version": "0.0.0",
   "private": false,
   "type": "module",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@actions/core": "^1.10.1",
     "@actions/github": "^6.0.0",
-    "baseline-tools-cli": "^0.0.0"
+    "@whoisahmad/baseline-tools-cli": "^0.0.0"
   },
   "devDependencies": {
     "typescript": "^5.5.4",

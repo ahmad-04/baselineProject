@@ -75,7 +75,7 @@ async function run() {
     let stderr: string;
     try {
       ({ stdout, stderr } = await pexec(
-        `npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
+        `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
       ));
     } catch {
       const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
@@ -167,7 +167,7 @@ async function run() {
     if (generateHtml) {
       core.info(`Generating HTML report: ${htmlReportPath}`);
       try {
-        const cmd = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
+        const cmd = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
         await pexec(cmd);
       } catch {
         const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
@@ -183,7 +183,7 @@ async function run() {
     if (generateSarif) {
       core.info(`Generating SARIF report: ${sarifReportPath}`);
       try {
-        const cmdSarif = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
+        const cmdSarif = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
         await pexec(cmdSarif);
       } catch {
         const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
