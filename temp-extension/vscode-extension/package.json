@@ -84,7 +84,7 @@
     "clean": "rimraf dist"
   },
   "dependencies": {
-  "baseline-tools-core": "file:../core"
+    "baseline-tools-core": "file:../core"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",

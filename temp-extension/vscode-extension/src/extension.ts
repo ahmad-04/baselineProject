@@ -454,14 +454,14 @@ class CodeActionProvider implements vscode.CodeActionProvider {
       let importLine: string | undefined;
       const id = String(d.code || "");
       if (id === "navigator-share")
-  importLine = `import { canShare } from 'baseline-tools-helpers';\n`;
+        importLine = `import { canShare } from 'baseline-tools-helpers';\n`;
       else if (id === "url-canparse")
-  importLine = `import { canParseUrl } from 'baseline-tools-helpers';\n`;
+        importLine = `import { canParseUrl } from 'baseline-tools-helpers';\n`;
       else if (id === "view-transitions")
-  importLine = `import { hasViewTransitions } from 'baseline-tools-helpers';\n`;
+        importLine = `import { hasViewTransitions } from 'baseline-tools-helpers';\n`;
       else if (id === "file-system-access-picker")
-  importLine = `import { canShowOpenFilePicker } from 'baseline-tools-helpers';\n`;
-  if (importLine && !text.includes("baseline-tools-helpers")) {
+        importLine = `import { canShowOpenFilePicker } from 'baseline-tools-helpers';\n`;
+      if (importLine && !text.includes("baseline-tools-helpers")) {
         edit.insert(doc.uri, new vscode.Position(0, 0), importLine + "\n");
       }
       // Insert near selection start if the diagnostic is inside selection, else at diagnostic
