@@ -71,9 +71,18 @@ async function run() {
       }
     }
 
-    const { stdout, stderr } = await pexec(
-      `npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
-    );
+    let stdout: string;
+    let stderr: string;
+    try {
+      ({ stdout, stderr } = await pexec(
+        `npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
+      ));
+    } catch {
+      const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
+      ({ stdout, stderr } = await pexec(
+        `${process.execPath} ${localCli} ${scanPath} --json --exit-zero${filesArg}`
+      ));
+    }
     let report: any;
     try {
       report = JSON.parse(stdout);
@@ -156,9 +165,15 @@ async function run() {
     core.summary.addHeading("Baseline Guard");
     core.summary.addRaw(summaryLines.join("\n"));
     if (generateHtml) {
-      const cmd = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
       core.info(`Generating HTML report: ${htmlReportPath}`);
-      await pexec(cmd);
+      try {
+        const cmd = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
+        await pexec(cmd);
+      } catch {
+        const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
+        const cmd = `${process.execPath} ${localCli} ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
+        await pexec(cmd);
+      }
       core.setOutput("html-report", htmlReportPath);
       core.summary.addRaw(`\n\nReport saved to: ${htmlReportPath}`);
       summaryLines.push(
@@ -166,9 +181,15 @@ async function run() {
       );
     }
     if (generateSarif) {
-      const cmdSarif = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
       core.info(`Generating SARIF report: ${sarifReportPath}`);
-      await pexec(cmdSarif);
+      try {
+        const cmdSarif = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
+        await pexec(cmdSarif);
+      } catch {
+        const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
+        const cmdSarif = `${process.execPath} ${localCli} ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
+        await pexec(cmdSarif);
+      }
       core.setOutput("sarif-report", sarifReportPath);
     }
     await core.summary.write();

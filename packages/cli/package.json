@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "type": "module",
   "bin": {
-    "baseline-scan": "dist/index.js"
+    "baseline-scan": "dist/index.js",
+    "baseline-tools-cli": "dist/index.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
