@@ -25,7 +25,7 @@
     "lint:fix": "eslint . --fix",
     "clean": "rimraf packages/**/dist packages/**/node_modules",
     "release:version": "changeset version && npm i --package-lock-only",
-    "release:publish": "echo \"Skipping npm publish for now\" && exit 0",
+    "release:publish": "changeset publish",
     "vsce:package": "npm run build && node packages/vscode-extension/scripts/bundle-core.cjs && node packages/vscode-extension/scripts/pack.cjs",
     "vsce:publish": "npm run vsce:package && npm --prefix packages/vscode-extension run publish",
     "vsce:publish:patch": "npm run vsce:package && npm --prefix packages/vscode-extension run publish:patch",

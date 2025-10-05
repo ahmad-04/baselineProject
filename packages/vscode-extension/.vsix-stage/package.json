@@ -2,7 +2,7 @@
   "name": "baseline-guardrails-vscode",
   "displayName": "Baseline Guardrails",
   "description": "Inline diagnostics and quick fixes for non-Baseline web features.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "ahmad-04",
   "license": "MIT",
   "repository": {

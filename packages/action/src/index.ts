@@ -80,14 +80,8 @@ async function run() {
           `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
         ));
       } catch {
-        try {
-          ({ stdout, stderr } = await pexec(
-            `npx -y baseline-tools-cli ${scanPath} --json --exit-zero${filesArg}`
-          ));
-        } catch {
-          // Fall back to local CLI
-          throw new Error("Need to use local CLI");
-        }
+        // Fall back to local CLI
+        throw new Error("Need to use local CLI");
       }
     } catch {
       const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
@@ -183,12 +177,7 @@ async function run() {
           const cmd = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
           await pexec(cmd);
         } catch {
-          try {
-            const cmd = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${htmlReportPath}${filesArg}`;
-            await pexec(cmd);
-          } catch {
-            throw new Error("Need to use local CLI");
-          }
+          throw new Error("Need to use local CLI");
         }
       } catch {
         const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
@@ -208,12 +197,7 @@ async function run() {
           const cmdSarif = `npx -y @whoisahmad/baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
           await pexec(cmdSarif);
         } catch {
-          try {
-            const cmdSarif = `npx -y baseline-tools-cli ${scanPath} --exit-zero --report ${sarifReportPath}${filesArg}`;
-            await pexec(cmdSarif);
-          } catch {
-            throw new Error("Need to use local CLI");
-          }
+          throw new Error("Need to use local CLI");
         }
       } catch {
         const localCli = path.resolve(__dirname, "../../cli/dist/index.js");
