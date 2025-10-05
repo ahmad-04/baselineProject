@@ -5,7 +5,7 @@
     { "repo": "ahmad-04/baselineProject" }
   ],
   "commit": false,
-  "access": "restricted",
+  "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "linked": [],
