@@ -30,19 +30,8 @@ jobs:
           npm i -g npm@latest
           npm --version
 
-      - name: Install dependencies (root)
+      - name: Install dependencies
         run: npm install --no-audit --no-fund
-
-      - name: Install workspace packages explicitly
-        run: >-
-          npm install --no-audit --no-fund
-          -w packages/core
-          -w packages/helpers
-          -w packages/cli
-          -w packages/action
-          -w packages/eslint-plugin-baseline
-          -w packages/lsp-server
-          -w packages/vscode-extension
 
       - name: Build monorepo
         run: npm run build
