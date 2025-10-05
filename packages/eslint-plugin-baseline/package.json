@@ -1,6 +1,6 @@
 {
   "name": "@whoisahmad/eslint-plugin-baseline",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
     "eslint": ">=8"
   },
   "dependencies": {
-    "@whoisahmad/baseline-tools-core": "^0.0.0"
+    "@whoisahmad/baseline-tools-core": "^0.0.1"
   },
   "devDependencies": {
     "eslint": "^9.9.0",
