@@ -30,14 +30,16 @@ jobs:
           npm --version
           npm i -g npm@latest
           npm --version
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
       - name: Create Release PR or Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
         uses: changesets/action@v1
         with:
           publish: npm run release:publish
           version: npm run release:version
-          install: npm install --no-audit --no-fund
-          build: npm run build
         env:
           # If org policy blocks the Actions bot, create a classic PAT secret (CHANGESETS_TOKEN)
           # and replace the line below with: GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
