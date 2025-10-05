@@ -32,18 +32,18 @@ baseline-scan <path> [options]
 
 Key options:
 
-| Flag | Description |
-|------|-------------|
-| `--json` | Print full JSON report to stdout. |
-| `--report <file>` | Write report (JSON / HTML / SARIF based on extension). |
-| `--exit-zero` | Force exit code 0 (CI summaries without failing builds). |
-| `--files <csv>` | Restrict scan to specific globs (e.g., changed files). |
-| `--unsupported-threshold <n>` | Reclassify "needs-guard" to safe if unsupported% ≤ n. |
-| `--config <path>` | Explicit `baseline.config.json` path. |
-| `--changed` | Scan only changed (vs HEAD) + untracked files. |
-| `--since <ref>` | Base ref for `--changed` (default HEAD). |
-| `--cache` | Enable content-hash cache (v3). |
-| `--cache-file <path>` | Custom cache filename. |
+| Flag                          | Description                                              |
+| ----------------------------- | -------------------------------------------------------- |
+| `--json`                      | Print full JSON report to stdout.                        |
+| `--report <file>`             | Write report (JSON / HTML / SARIF based on extension).   |
+| `--exit-zero`                 | Force exit code 0 (CI summaries without failing builds). |
+| `--files <csv>`               | Restrict scan to specific globs (e.g., changed files).   |
+| `--unsupported-threshold <n>` | Reclassify "needs-guard" to safe if unsupported% ≤ n.    |
+| `--config <path>`             | Explicit `baseline.config.json` path.                    |
+| `--changed`                   | Scan only changed (vs HEAD) + untracked files.           |
+| `--since <ref>`               | Base ref for `--changed` (default HEAD).                 |
+| `--cache`                     | Enable content-hash cache (v3).                          |
+| `--cache-file <path>`         | Custom cache filename.                                   |
 
 ## Examples
 
@@ -86,11 +86,11 @@ baseline-scan src --unsupported-threshold 5
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | No non-Baseline findings (or `--exit-zero` used). |
-| 1 | At least one non-Baseline finding. |
-| >1 | Internal error (stack logged). |
+| Code | Meaning                                           |
+| ---- | ------------------------------------------------- |
+| 0    | No non-Baseline findings (or `--exit-zero` used). |
+| 1    | At least one non-Baseline finding.                |
+| >1   | Internal error (stack logged).                    |
 
 ## HTML Report
 

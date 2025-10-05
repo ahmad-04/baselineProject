@@ -51,20 +51,20 @@ jobs:
 
 ## Inputs
 
-| Name | Default | Description |
-|------|---------|-------------|
-| `github-token` | (none) | Token for PR comments and diff detection. Use `${{ secrets.GITHUB_TOKEN }}`. |
-| `path` | `.` | Root path to scan. |
-| `generate-html-report` | `true` | Generate an HTML adoption report. |
-| `report-html-path` | `baseline-report.html` | Where to write the HTML report. |
-| `generate-sarif-report` | `true` | Generate a SARIF 2.1.0 report. |
-| `report-sarif-path` | `baseline-report.sarif` | Where to write the SARIF report. |
+| Name                    | Default                 | Description                                                                  |
+| ----------------------- | ----------------------- | ---------------------------------------------------------------------------- |
+| `github-token`          | (none)                  | Token for PR comments and diff detection. Use `${{ secrets.GITHUB_TOKEN }}`. |
+| `path`                  | `.`                     | Root path to scan.                                                           |
+| `generate-html-report`  | `true`                  | Generate an HTML adoption report.                                            |
+| `report-html-path`      | `baseline-report.html`  | Where to write the HTML report.                                              |
+| `generate-sarif-report` | `true`                  | Generate a SARIF 2.1.0 report.                                               |
+| `report-sarif-path`     | `baseline-report.sarif` | Where to write the SARIF report.                                             |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| `html-report` | Path to generated HTML report (if enabled). |
+| Name           | Description                                  |
+| -------------- | -------------------------------------------- |
+| `html-report`  | Path to generated HTML report (if enabled).  |
 | `sarif-report` | Path to generated SARIF report (if enabled). |
 
 ## How it Works
