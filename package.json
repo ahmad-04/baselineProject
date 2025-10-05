@@ -2,7 +2,7 @@
   "name": "baseline-guardrails",
   "private": true,
   "version": "0.0.0",
-  "description": "Baseline Guardrails monorepo: core engine, CLI scanner, GitHub Action",
+  "description": "Baseline Scan CLI monorepo (core analyzer internal only)",
   "workspaces": [
     "packages/*",
     "examples/*"
@@ -11,26 +11,21 @@
     "node": ">=18.18.0"
   },
   "scripts": {
-    "build:core": "npm --prefix packages/core run build",
-    "build:helpers": "npm --prefix packages/helpers run build",
-    "build:cli": "npm --prefix packages/cli run build",
-    "build:action": "npm --prefix packages/action run build",
-    "build:eslint": "npm --prefix packages/eslint-plugin-baseline run build",
-    "build:vscode": "npm --prefix packages/vscode-extension run build",
-    "build:lsp": "npm --prefix packages/lsp-server run build",
-    "build": "npm run build:core && npm run build:helpers && npm run build:cli && npm run build:action && npm run build:eslint && npm run build:lsp && npm run build:vscode",
-    "test": "npm run build && npm --prefix packages/core run test && npm --prefix packages/cli run test && npm --prefix packages/action run test && npm --prefix packages/eslint-plugin-baseline run test",
+  "build:core": "npm --prefix packages/core run build",
+  "build:cli": "npm --prefix packages/cli run build",
+  "build": "npm run build:core && npm run build:cli",
+  "test": "npm run build && npm --prefix packages/core run test && npm --prefix packages/cli run test",
     "format": "prettier --write .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "clean": "rimraf packages/**/dist packages/**/node_modules",
     "release:version": "changeset version && npm i --package-lock-only",
     "release:publish": "node scripts/publish-safe.cjs",
-    "vsce:package": "npm run build && node packages/vscode-extension/scripts/bundle-core.cjs && node packages/vscode-extension/scripts/pack.cjs",
-    "vsce:publish": "npm run vsce:package && npm --prefix packages/vscode-extension run publish",
-    "vsce:publish:patch": "npm run vsce:package && npm --prefix packages/vscode-extension run publish:patch",
-    "vsce:publish:minor": "npm run vsce:package && npm --prefix packages/vscode-extension run publish:minor",
-    "vsce:publish:major": "npm run vsce:package && npm --prefix packages/vscode-extension run publish:major"
+  "vsce:package": "echo 'VS Code extension retired'",
+  "vsce:publish": "echo 'Retired'",
+  "vsce:publish:patch": "echo 'Retired'",
+  "vsce:publish:minor": "echo 'Retired'",
+  "vsce:publish:major": "echo 'Retired'"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
