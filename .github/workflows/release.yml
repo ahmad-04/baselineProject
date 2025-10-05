@@ -1,4 +1,4 @@
-name: Release Packages
+name: Release CLI
 
 on:
   push:
@@ -35,52 +35,24 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Build
         run: npm run build
-      - name: NPM auth preflight
+      # Auth sanity check (lightweight)
+      - name: NPM auth check
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           echo "Registry: $(npm config get registry)"
-          echo "Pinging registry to verify availability..."
-          npm ping || echo "npm ping failed"
-          echo "Attempting npm whoami (should show your npm username)"
-          if ! npm whoami; then
-            echo "Authentication failed. Verify NPM_TOKEN is an npm Automation token (not a GitHub PAT)." >&2
-            exit 1
-          fi
-          echo "Listing existing packages for this user (may be empty if first publish)..."
-          npm search "@whoisahmad/DOES_NOT_EXIST_PROBE" --no-audit --no-fund >/dev/null 2>&1 || true
-          # access ls-packages only works after first publish; keep harmless
-          (npm access ls-packages 2>/dev/null || echo "No packages yet or insufficient rights")
-          echo "Performing dry-run publish of a single package (@whoisahmad/baseline-tools-core) for diagnostics..."
-          (cd packages/core && npm publish --access public --dry-run || echo "Dry run failed (expected for diagnostics)")
-      - name: Create Release PR or Publish
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
+          npm whoami
+      - name: Version / Publish (PR or direct)
         uses: changesets/action@v1
         with:
           publish: npm run release:publish
           version: npm run release:version
         env:
-          # If org policy blocks the Actions bot, create a classic PAT secret (CHANGESETS_TOKEN)
-          # and replace the line below with: GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Version (direct)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_pr == 'false' }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm run release:version
-          git add -A
-          git commit -m "chore(release): version packages" || echo "No changes to commit"
-          git push origin HEAD:main
-
-      - name: Publish (direct)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_pr == 'false' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm run release:publish
+      # Direct version/publish path removed (simplified to single changesets step)
 
       - name: Upload npm debug logs
         if: always()
