@@ -101,24 +101,25 @@ Historical packages (now private / not updated): `core`, `helpers`, `eslint-plug
 
 ## Output Formats
 
-| Format | How |
-|--------|-----|
-| Console (pretty) | default run |
-| JSON | `--json` (stdout) or `--report report.json` |
-| HTML | `--report baseline-report.html` |
-| SARIF 2.1.0 | `--report baseline-report.sarif` |
+| Format           | How                                         |
+| ---------------- | ------------------------------------------- |
+| Console (pretty) | default run                                 |
+| JSON             | `--json` (stdout) or `--report report.json` |
+| HTML             | `--report baseline-report.html`             |
+| SARIF 2.1.0      | `--report baseline-report.sarif`            |
 
 Notes:
+
 - The HTML report includes filtering, sorting, and search (client-side only).
 - SARIF integrates with GitHub Code Scanning (`upload-sarif`).
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | No non‑Baseline findings (or `--exit-zero` specified). |
-| 1 | At least one non‑Baseline finding. |
-| >1 | Internal error. |
+| Code | Meaning                                                |
+| ---- | ------------------------------------------------------ |
+| 0    | No non‑Baseline findings (or `--exit-zero` specified). |
+| 1    | At least one non‑Baseline finding.                     |
+| >1   | Internal error.                                        |
 
 ## GitHub Actions Usage (CLI Only)
 
@@ -266,6 +267,7 @@ Practical guard/fallback examples are in `docs/recipes/`.
 Current: CLI + analyzer internal. HTML & SARIF reporting stable.
 
 Planned:
+
 - Broaden detector set (container queries, popover, import attributes, etc.).
 - Improve unsupported % accuracy (browser-compat-data integration).
 - `--sarif-category` for multi-scan pipelines.
