@@ -1,70 +1,37 @@
-# Baseline Guardrails
+# Baseline Scan CLI
 
 <p align="left">
-  <!-- Badges: core packages -->
-  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-core"><img alt="core version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-core.svg?label=core" /></a>
-  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-cli"><img alt="cli version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-cli.svg?label=cli" /></a>
-  <a href="https://www.npmjs.com/package/@whoisahmad/eslint-plugin-baseline"><img alt="eslint plugin version" src="https://img.shields.io/npm/v/%40whoisahmad%2feslint-plugin-baseline.svg?label=eslint+plugin" /></a>
-  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-helpers"><img alt="helpers version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-helpers.svg?label=helpers" /></a>
-  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-lsp-server"><img alt="lsp server version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-lsp-server.svg?label=lsp+server" /></a>
+  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-cli"><img alt="CLI version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-cli.svg?label=baseline-scan" /></a>
 </p>
+
+Single purpose: scan your source for non‑Baseline web platform features and produce actionable reports (console, JSON, HTML, SARIF).
+
+Previously this monorepo published multiple packages (core analyzer, ESLint plugin, helpers, LSP, GitHub Action). They are now internal / retired. Only the CLI package is published going forward.
 
 [![Tests](https://github.com/ahmad-04/baselineProject/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmad-04/baselineProject/actions/workflows/tests.yml)
 
-Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Code, and GitHub PR comments, all powered by a shared core analyzer.
-
-- Core: `baseline-tools-core` — regex-based detectors for modern web features, advice/guard flags, target-aware hints.
-- CLI: `baseline-scan` — pretty/JSON output, HTML adoption report, diff-only scanning.
-- ESLint: `eslint-plugin-baseline` — rule `baseline/no-nonbaseline` with suggestions, guard‑aware suppression.
-- VS Code: `baseline-guardrails-vscode` — diagnostics, hover, quick fixes, status bar, scan toggle, and Targets/Threshold picker.
-- Action: `baseline-tools-action` — compact PR summary (top findings), optional HTML report artifact, and SARIF output.
-- SARIF: CLI/Action can emit SARIF 2.1.0 for GitHub Code Scanning.
-
-## Features
+## Features (CLI)
 
 - Advice labels: “Safe to adopt”, “Guarded”, “Needs guard”. Guarded code counts as safe in totals.
 - Target-aware hints: Reads `browserslist` and shows “about X% may lack support” (approximate via caniuse-lite).
-- Guard-aware suppression: ESLint rule and VS Code diagnostics skip issues already wrapped in capability checks.
+- Guard-aware suppression (recognizes simple capability guards to downgrade severity).
 - HTML Adoption Report: Shareable report with targets, totals, advice, suggestions, and docs links.
-- SARIF Output: Use in security/code scanning dashboards.
-- Helpers: Drop-in capability checks to make guards trivial to add.
-- Config: `baseline.config.json` to centralize targets, thresholds, ignores, and feature toggles.
+- SARIF Output: Use in Code Scanning dashboards.
+- Config: `baseline.config.json` centralizes targets, thresholds, ignores, and feature toggles.
 
 ## Quick Start
 
-### Installation (pick what you need)
+### Installation
 
-Add the core analyzer (often a dev dependency if consumed via CLI / ESLint):
+Install (dev dependency) or run ad‑hoc with npx.
 
-```bash
-npm install -D @whoisahmad/baseline-tools-core
-```
-
-Install the CLI (you can also just use it via `npx baseline-scan` without installing):
+Install:
 
 ```bash
 npm install -D @whoisahmad/baseline-tools-cli
 ```
 
-ESLint plugin:
-
-```bash
-npm install -D @whoisahmad/eslint-plugin-baseline
-```
-
-Helpers (runtime capability checks shipped with your app):
-
-```bash
-npm install @whoisahmad/baseline-tools-helpers
-```
-
-Experimental LSP server (only if you want to embed or extend):
-
-```bash
-npm install -D @whoisahmad/baseline-tools-lsp-server
-```
-
-After install you can run (without a local install) using npx:
+Ad‑hoc (no install):
 
 ```bash
 npx baseline-scan ./src --report baseline-report.html --exit-zero
@@ -79,7 +46,7 @@ npm install
 npm run build
 ```
 
-2. Run the CLI (pretty)
+2. Run a pretty scan
 
 ```bash
 node packages/cli/dist/index.js examples/demo-repo
@@ -101,9 +68,7 @@ node packages/cli/dist/index.js examples/demo-repo --report baseline-report.html
 node packages/cli/dist/index.js examples/demo-repo --report baseline-report.sarif --exit-zero
 ```
 
-4. GitHub Action (already wired)
-
-The workflow `.github/workflows/baseline-guard.yml` builds, scans, posts a compact PR summary, uploads the HTML report, and uploads SARIF to GitHub Code Scanning.
+5. (Optional) SARIF upload with your own workflow (see Code Scanning section).
 
 ## CLI Usage
 
@@ -130,148 +95,37 @@ Notes:
 
 See also: `docs/incremental-scanning.md`.
 
-## ESLint Rule
+## Retired Packages (Internal Only)
 
-Flat config example (ESLint v9):
+Historical packages (now private / not updated): `core`, `helpers`, `eslint-plugin-baseline`, `lsp-server`, `action`, and the VS Code extension. Their functionality is either folded into or superseded by the CLI workflow. If you need one resurrected, open an issue.
 
-```js
-// eslint.config.js
-import baseline from "../packages/eslint-plugin-baseline/dist/index.js"; // adjust path if using as a local plugin
+## Output Formats
 
-export default [
-  {
-    files: ["src/**/*.{js,jsx,ts,tsx}"],
-    plugins: { baseline },
-    rules: {
-      // Options override baseline.config.json
-      "baseline/no-nonbaseline": [
-        "warn",
-        {
-          targets: ">0.5% and not dead", // string or string[]
-          unsupportedThreshold: 5, // number; reclassify <= threshold as Safe
-          features: { urlpattern: true }, // per-feature toggles
-        },
-      ],
-    },
-  },
-];
-```
+| Format | How |
+|--------|-----|
+| Console (pretty) | default run |
+| JSON | `--json` (stdout) or `--report report.json` |
+| HTML | `--report baseline-report.html` |
+| SARIF 2.1.0 | `--report baseline-report.sarif` |
 
-- Reads `browserslist` (nearest `package.json`) and passes targets to the analyzer.
-- Message includes advice label; suggestions add non‑destructive guard/fallback templates.
-- Guarded usages are skipped (no warning).
-- Options precedence: ESLint rule options > `baseline.config.json` > nearest package `browserslist`.
+Notes:
+- The HTML report includes filtering, sorting, and search (client-side only).
+- SARIF integrates with GitHub Code Scanning (`upload-sarif`).
 
-## VS Code Extension
+## Exit Codes
 
-Capabilities:
+| Code | Meaning |
+|------|---------|
+| 0 | No non‑Baseline findings (or `--exit-zero` specified). |
+| 1 | At least one non‑Baseline finding. |
+| >1 | Internal error. |
 
-- Diagnostics for non‑Baseline features (guarded ones suppressed).
-- Hover with suggestion, docs, and current targets.
-- Quick fixes insert guard/fallback snippets.
-- Status bar shows counts, targets, scan mode, and analysis mode (lsp/local).
-- Commands: `Baseline: Scan Workspace`, `Baseline: Toggle Scan Mode (change/save)`, `Baseline: Pick Targets/Threshold`, `Baseline: Fix all in file`, `Baseline: Restart LSP (experimental)`.
+## GitHub Actions Usage (CLI Only)
 
-Run from this repo: use the provided launch config “Run Extension (baseline-guardrails)” and press F5.
-
-### VS Code Settings
-
-- `baseline.scanOnChange`: Scan on every edit (`true`) or only on save (`false`). Togglable via “Baseline: Toggle Scan Mode (change/save)”.
-- `baseline.targets`: Optional override for Browserslist targets used in analysis. When set, takes precedence over `baseline.config.json` and nearest package `browserslist`.
-- `baseline.unsupportedThreshold`: Optional number; when `>= 0`, findings with unsupported% less than or equal to this threshold are treated as Safe in diagnostics.
-- `baseline.useLsp` (experimental): Use the bundled stdio LSP server for analysis. The extension debounces per-document requests and falls back to local analysis if the server is unavailable or slow. You can restart via the `Baseline: Restart LSP (experimental)` command.
-
-Status bar shows: count of diagnostics • current targets (or `auto`) • scan mode (`change`/`save`) • analysis mode (`lsp`/`local`).
-
-### VS Code Usage
-
-1. Open a JS/TS/HTML/CSS file with modern features. Diagnostics appear inline.
-2. Hover a highlighted range to view advice, docs, and targets.
-3. Use Quick Fix to insert a guard/fallback snippet, or run `Baseline: Fix all in file` to insert suggestions for all findings.
-4. Toggle scan mode via Command Palette: “Baseline: Toggle Scan Mode (change/save)”.
-5. Pick targets/threshold via Command Palette: “Baseline: Pick Targets/Threshold”.
-6. (Optional) Enable LSP mode in Settings (`baseline.useLsp`) and use “Baseline: Restart LSP (experimental)” if you update or restart the server.
-
-Screenshots:
-
-- VS Code diagnostics and status bar: `docs/images/vscode-status.svg`
-- Quick Fix example: `docs/images/vscode-quickfix.svg`
-- HTML report: `docs/images/html-report.svg`
-- Code Scanning alert: `docs/images/code-scanning.svg`
-
-## Helpers
-
-Package: `baseline-tools-helpers`
-
-- `canShare()`: checks `navigator.share` availability
-- `canParseUrl(url)`: uses `URL.canParse` when available, falls back to `new URL()`
-- `hasViewTransitions()`: checks `document.startViewTransition`
-- `canShowOpenFilePicker()`: checks `window.showOpenFilePicker`
-
-Example:
-
-```ts
-import { canShare } from "baseline-tools-helpers";
-
-async function sharePage() {
-  if (canShare()) {
-    await navigator.share({ title: document.title, url: location.href });
-  } else {
-    // fallback UI
-  }
-}
-```
-
-## GitHub Action
-
-Local action `packages/action` posts a compact PR summary and, by default, generates an HTML report. It can also generate SARIF for Code Scanning.
-
-Inputs:
-
-- `github-token` (optional, string): enables diff‑only scanning and PR comments.
-- `path` (string): folder to scan.
-- `generate-html-report` (optional, default `true`): write HTML report.
-- `report-html-path` (optional, default `baseline-report.html`): where to save it.
-- `generate-sarif-report` (optional, default `true`): write SARIF report for Code Scanning.
-- `report-sarif-path` (optional, default `baseline-report.sarif`): where to save SARIF.
-
-Outputs:
-
-- `html-report`: path to the generated HTML file.
-- `sarif-report`: path to the generated SARIF file.
-
-Workflow snippet:
+Minimal workflow using only the published CLI (no separate Action package needed):
 
 ```yaml
-- name: Baseline Guard summary + reports
-  uses: ./packages/action
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    path: examples/demo-repo
-    generate-html-report: true
-    generate-sarif-report: true
-
-- name: Upload HTML report (if generated)
-  if: always()
-  uses: actions/upload-artifact@v4
-  with:
-    name: baseline-html-report
-    path: examples/demo-repo/baseline-report.html
-
-- name: Upload SARIF to Code Scanning
-  if: always()
-  uses: github/codeql-action/upload-sarif@v3
-  with:
-    sarif_file: examples/demo-repo/baseline-report.sarif
-```
-
-### Use in other repositories
-
-You can consume this Action from any repo by referencing this repository and the `packages/action` path at a tag. For convenience, create / use a sanitized tag like `action-v0.0.1` (and optionally a moving major tag `action-v0`).
-
-```yaml
-name: Baseline Guard
-
+name: Baseline Scan
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -279,7 +133,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
   security-events: write
 
 jobs:
@@ -287,31 +140,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Baseline Guard summary + reports
-  uses: ahmad-04/baselineProject/packages/action@action-v0.0.1
+      - uses: actions/setup-node@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: .
-          generate-html-report: true
-          generate-sarif-report: true
-      - name: Upload HTML report
+          node-version: 20
+      - name: Baseline scan (HTML + SARIF)
+        run: |
+          npx @whoisahmad/baseline-tools-cli . --report baseline-report.html --exit-zero
+          npx @whoisahmad/baseline-tools-cli . --report baseline-report.sarif --exit-zero
+      - name: Upload HTML
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: baseline-html-report
           path: baseline-report.html
-      - name: Upload SARIF to Code Scanning
+      - name: Upload SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: baseline-report.sarif
 ```
-
-Notes:
-
-- Provide a clean tag (`action-vX.Y.Z`) rather than using the npm-style package tag with an `@scope` in the git ref (GitHub Actions handles simple tag names more predictably).
-- Optionally create / move a major tag alias like `action-v0` to the latest minor.
-- The Action invokes the published CLI via `npx baseline-scan` (installed on demand from `@whoisahmad/baseline-tools-cli`).
 
 ## Configuration
 
@@ -414,20 +261,15 @@ Practical guard/fallback examples are in `docs/recipes/`.
 - Target coverage uses caniuse‑lite and a minimal feature mapping; percentages are approximate and may be refined.
 - Partial support (caniuse “a”) is treated as supported for guidance.
 
-## Status
+## Status & Roadmap (CLI Focus)
 
-MVP complete: Core + CLI + ESLint + VS Code + Action + HTML report, first public npm publish shipped.
+Current: CLI + analyzer internal. HTML & SARIF reporting stable.
 
-### Suggested Next Steps (Roadmap Snapshot)
+Planned:
+- Broaden detector set (container queries, popover, import attributes, etc.).
+- Improve unsupported % accuracy (browser-compat-data integration).
+- `--sarif-category` for multi-scan pipelines.
+- Config wizard (`npx baseline-scan --init`).
+- Performance benchmarks & cache heuristics refinement.
 
-- Broaden detector set (CSS container queries, popover, import attributes, etc.).
-- Improve percentage accuracy: integrate MDN/browser-compat-data or refine mapping to differentiate partial support.
-- Add caching + incremental logic to ESLint rule (skip unchanged regions when using editor watch).
-- Publish prebuilt HTML theme assets as a small `baseline-tools-report-assets` package for external customization.
-- Add real tests for the Action and ESLint plugin (currently smoke/no-op).
-- Introduce perf benchmarks (AST parse time vs file count) to guard against regressions.
-- Provide a `--sarif-category` option to allow multiple Baseline scans in composite security pipelines.
-- Add Quick Fixes for more feature patterns and multi-range fixes.
-- Consider a config wizard (`npx baseline-scan --init`) to scaffold `baseline.config.json`.
-
-If you want automation for any of these, open an issue or start a changeset and tag the task.
+Have a request? Open an issue.

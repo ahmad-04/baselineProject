@@ -15,5 +15,5 @@ coverage/
 packages/**/dist/
 examples/**/dist/
 
-# Include action dist for GitHub Actions consumers
-!packages/action/dist/
+# Ignore retired action package entirely
+packages/action/
