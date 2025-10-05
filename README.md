@@ -1,5 +1,14 @@
 # Baseline Guardrails
 
+<p align="left">
+  <!-- Badges: core packages -->
+  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-core"><img alt="core version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-core.svg?label=core" /></a>
+  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-cli"><img alt="cli version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-cli.svg?label=cli" /></a>
+  <a href="https://www.npmjs.com/package/@whoisahmad/eslint-plugin-baseline"><img alt="eslint plugin version" src="https://img.shields.io/npm/v/%40whoisahmad%2feslint-plugin-baseline.svg?label=eslint+plugin" /></a>
+  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-helpers"><img alt="helpers version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-helpers.svg?label=helpers" /></a>
+  <a href="https://www.npmjs.com/package/@whoisahmad/baseline-tools-lsp-server"><img alt="lsp server version" src="https://img.shields.io/npm/v/%40whoisahmad%2fbaseline-tools-lsp-server.svg?label=lsp+server" /></a>
+</p>
+
 [![Tests](https://github.com/ahmad-04/baselineProject/actions/workflows/tests.yml/badge.svg)](https://github.com/ahmad-04/baselineProject/actions/workflows/tests.yml)
 
 Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Code, and GitHub PR comments, all powered by a shared core analyzer.
@@ -22,6 +31,46 @@ Guardrails that bring Baseline data to where developers work: CLI, ESLint, VS Co
 - Config: `baseline.config.json` to centralize targets, thresholds, ignores, and feature toggles.
 
 ## Quick Start
+
+### Installation (pick what you need)
+
+Add the core analyzer (often a dev dependency if consumed via CLI / ESLint):
+
+```bash
+npm install -D @whoisahmad/baseline-tools-core
+```
+
+Install the CLI (you can also just use it via `npx baseline-scan` without installing):
+
+```bash
+npm install -D @whoisahmad/baseline-tools-cli
+```
+
+ESLint plugin:
+
+```bash
+npm install -D @whoisahmad/eslint-plugin-baseline
+```
+
+Helpers (runtime capability checks shipped with your app):
+
+```bash
+npm install @whoisahmad/baseline-tools-helpers
+```
+
+Experimental LSP server (only if you want to embed or extend):
+
+```bash
+npm install -D @whoisahmad/baseline-tools-lsp-server
+```
+
+After install you can run (without a local install) using npx:
+
+```bash
+npx baseline-scan ./src --report baseline-report.html --exit-zero
+```
+
+---
 
 1. Install and build
 
@@ -218,7 +267,7 @@ Workflow snippet:
 
 ### Use in other repositories
 
-You can consume this Action from any repo by referencing this repository and the `packages/action` path at a tag:
+You can consume this Action from any repo by referencing this repository and the `packages/action` path at a tag. For convenience, create / use a sanitized tag like `action-v0.0.1` (and optionally a moving major tag `action-v0`).
 
 ```yaml
 name: Baseline Guard
@@ -239,7 +288,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Baseline Guard summary + reports
-        uses: ahmad-04/baselineProject/packages/action@action-v0
+  uses: ahmad-04/baselineProject/packages/action@action-v0.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: .
@@ -260,8 +309,9 @@ jobs:
 
 Notes:
 
-- The `@action-v0` tag is a moving major tag you can update when releasing. Consumers may also pin to a specific tag like `@action-v0.1.0` or a commit SHA.
-- The Action invokes the published CLI via `npx baseline-tools-cli`.
+- Provide a clean tag (`action-vX.Y.Z`) rather than using the npm-style package tag with an `@scope` in the git ref (GitHub Actions handles simple tag names more predictably).
+- Optionally create / move a major tag alias like `action-v0` to the latest minor.
+- The Action invokes the published CLI via `npx baseline-scan` (installed on demand from `@whoisahmad/baseline-tools-cli`).
 
 ## Configuration
 
@@ -366,4 +416,18 @@ Practical guard/fallback examples are in `docs/recipes/`.
 
 ## Status
 
-MVP complete: Core + CLI + ESLint + VS Code + Action + HTML report. Next steps: expand feature coverage mapping, add helper utilities (guard wrappers), richer HTML summaries, and broaden detectors.
+MVP complete: Core + CLI + ESLint + VS Code + Action + HTML report, first public npm publish shipped.
+
+### Suggested Next Steps (Roadmap Snapshot)
+
+- Broaden detector set (CSS container queries, popover, import attributes, etc.).
+- Improve percentage accuracy: integrate MDN/browser-compat-data or refine mapping to differentiate partial support.
+- Add caching + incremental logic to ESLint rule (skip unchanged regions when using editor watch).
+- Publish prebuilt HTML theme assets as a small `baseline-tools-report-assets` package for external customization.
+- Add real tests for the Action and ESLint plugin (currently smoke/no-op).
+- Introduce perf benchmarks (AST parse time vs file count) to guard against regressions.
+- Provide a `--sarif-category` option to allow multiple Baseline scans in composite security pipelines.
+- Add Quick Fixes for more feature patterns and multi-range fixes.
+- Consider a config wizard (`npx baseline-scan --init`) to scaffold `baseline.config.json`.
+
+If you want automation for any of these, open an issue or start a changeset and tag the task.
