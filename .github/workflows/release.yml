@@ -30,33 +30,14 @@ jobs:
           npm --version
           npm i -g npm@latest
           npm --version
-      - name: Install deps (root)
-        run: npm install --no-audit --no-fund
-
-      - name: Install workspace packages explicitly
-        run: >-
-          npm install --no-audit --no-fund
-          -w packages/core
-          -w packages/helpers
-          -w packages/cli
-          -w packages/action
-          -w packages/eslint-plugin-baseline
-          -w packages/lsp-server
-          -w packages/vscode-extension
-      - name: Build
-        run: npm run build
-      - name: NPM auth preflight
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "Skipping npm auth check for now. We're not publishing packages."
-          echo "Registry: $(npm config get registry)"
       - name: Create Release PR or Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
         uses: changesets/action@v1
         with:
           publish: npm run release:publish
           version: npm run release:version
+          install: npm install --no-audit --no-fund
+          build: npm run build
         env:
           # If org policy blocks the Actions bot, create a classic PAT secret (CHANGESETS_TOKEN)
           # and replace the line below with: GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
