@@ -9,8 +9,5 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "linked": [],
-  "ignore": [
-    "baseline-demo-repo",
-    "baseline-guardrails-vscode"
-  ]
+  "ignore": ["baseline-demo-repo", "baseline-guardrails-vscode"]
 }
