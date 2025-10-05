@@ -1,5 +1,6 @@
 {
   "name": "baseline-guardrails-vscode",
+  "private": true,
   "displayName": "Baseline Guardrails",
   "description": "Inline diagnostics and quick fixes for non-Baseline web features.",
   "version": "0.0.3",

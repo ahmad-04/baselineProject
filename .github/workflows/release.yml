@@ -25,6 +25,7 @@ jobs:
         with:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
+          always-auth: true
       - name: Upgrade npm
         run: |
           npm --version
@@ -44,6 +45,8 @@ jobs:
             echo "Authentication failed. Verify NPM_TOKEN is an npm Automation token (not a GitHub PAT)." >&2
             exit 1
           fi
+          echo "Performing dry-run publish of a single package (@whoisahmad/baseline-tools-core) for diagnostics..."
+          (cd packages/core && npm publish --access public --dry-run || echo "Dry run failed (expected for diagnostics)")
       - name: Create Release PR or Publish
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.create_pr == 'true' }}
         uses: changesets/action@v1
