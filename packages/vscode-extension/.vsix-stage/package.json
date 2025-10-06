@@ -91,5 +91,10 @@
         }
       }
     }
-  }
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE"
+  ]
 }
