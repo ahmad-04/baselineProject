@@ -21,11 +21,11 @@
     "clean": "rimraf packages/**/dist packages/**/node_modules",
     "release:version": "changeset version && npm i --package-lock-only",
     "release:publish": "node scripts/publish-safe.cjs",
-    "vsce:package": "echo 'VS Code extension retired'",
-    "vsce:publish": "echo 'Retired'",
-    "vsce:publish:patch": "echo 'Retired'",
-    "vsce:publish:minor": "echo 'Retired'",
-    "vsce:publish:major": "echo 'Retired'"
+    "vsce:package": "npm run build:core && npm --prefix packages/vscode-extension run build && node packages/vscode-extension/scripts/bundle-core.cjs && node packages/vscode-extension/scripts/pack.cjs",
+    "vsce:publish": "npm run vsce:package && node packages/vscode-extension/scripts/publish.cjs",
+    "vsce:publish:patch": "npm run vsce:package && node packages/vscode-extension/scripts/publish.cjs patch",
+    "vsce:publish:minor": "npm run vsce:package && node packages/vscode-extension/scripts/publish.cjs minor",
+    "vsce:publish:major": "npm run vsce:package && node packages/vscode-extension/scripts/publish.cjs major"
   },
   "devDependencies": {
     "@eslint/js": "^9.12.0",
@@ -36,7 +36,8 @@
     "@changesets/changelog-github": "^0.5.0",
     "rimraf": "^5.0.5",
     "typescript": "^5.5.4",
-    "typescript-eslint": "^8.12.2"
+    "typescript-eslint": "^8.12.2",
+    "@vscode/vsce": "^3.0.0"
   },
   "dependencies": {}
 }
