@@ -284,7 +284,10 @@ function pushMatches(
       let advice: "safe" | "needs-guard" | "guarded" =
         it.baseline === "yes" ? "safe" : guarded ? "guarded" : "needs-guard";
       const baselineFlag = isBaselineFeature(it.id);
-      if (baselineFlag === true && advice !== "guarded") advice = "safe";
+      // Only upgrade to safe automatically when the feature is fully baseline (declared baseline 'yes').
+      if (baselineFlag === true && it.baseline === "yes" && advice !== "guarded") {
+        advice = "safe";
+      }
       arr.push({
         file,
         line,
@@ -341,7 +344,9 @@ export function analyze(
                 ? "guarded"
                 : "needs-guard";
           const baselineFlag = isBaselineFeature(a.featureId);
-          if (baselineFlag === true && advice !== "guarded") advice = "safe";
+          if (baselineFlag === true && a.baseline === "yes" && advice !== "guarded") {
+            advice = "safe";
+          }
           findings.push({
             file: f.path,
             line: a.line,
@@ -376,8 +381,7 @@ export function analyze(
                 const idx = um.index;
                 const { line, column } = positionFromIndex(f.content, idx);
                 let advice: "safe" | "needs-guard" | "guarded" = "needs-guard";
-                const baselineFlag = isBaselineFeature("urlpattern");
-                if (baselineFlag === true) advice = "safe";
+                // Do not auto-mark URLPattern as safe if it's only partial baseline.
                 findings.push({
                   file: f.path,
                   line,
@@ -385,7 +389,7 @@ export function analyze(
                   featureId: "urlpattern",
                   title: "URLPattern",
                   baseline: "partial",
-                  severity: advice === "safe" ? "info" : "warn",
+                  severity: advice === "needs-guard" ? "warn" : "info",
                   docsUrl:
                     "https://developer.mozilla.org/docs/Web/API/URL_Pattern_API",
                   suggestion:
