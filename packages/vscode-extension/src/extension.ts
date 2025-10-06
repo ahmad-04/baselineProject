@@ -370,6 +370,126 @@ function computeDiagnostics(doc: vscode.TextDocument) {
   }
 }
 
+// Compute diagnostics for a file path without opening it in an editor
+async function computeDiagnosticsForPath(filePath: string) {
+  try {
+    const ext = path.extname(filePath).toLowerCase();
+    const langMap: Record<string, string> = {
+      ".js": "javascript",
+      ".ts": "typescript",
+      ".jsx": "javascriptreact",
+      ".tsx": "typescriptreact",
+      ".css": "css",
+      ".scss": "scss",
+      ".htm": "html",
+      ".html": "html",
+    };
+    const languageId = langMap[ext];
+    if (!languageId) return; // Unsupported
+    if (analyze === (((): any[] => []) as any)) return;
+    const content = fs.readFileSync(filePath, "utf8");
+    const findings = analyze([{ path: filePath, content }], {
+      targets: loadTargetsFromPath(filePath),
+    });
+    const cfg = loadConfigLike(filePath);
+    const vs = getVsCodeSettings();
+    const diags: vscode.Diagnostic[] = [];
+    for (const f of findings) {
+      if (cfg?.features && cfg.features[f.featureId] === false) continue;
+      if (f.baseline === "yes") continue;
+      if ((f as any).advice === "guarded") continue;
+      const threshold =
+        typeof vs.unsupportedThreshold === "number" &&
+        vs.unsupportedThreshold >= 0
+          ? vs.unsupportedThreshold
+          : cfg?.unsupportedThreshold;
+      const a = (f as any).advice as string | undefined;
+      const effAdvice =
+        typeof threshold === "number" &&
+        a === "needs-guard" &&
+        typeof (f as any).unsupportedPercent === "number" &&
+        (f as any).unsupportedPercent <= threshold
+          ? "safe"
+          : a || "needs-guard";
+      if (effAdvice === "safe") continue;
+      const range = new vscode.Range(
+        new vscode.Position(Math.max(0, f.line - 1), Math.max(0, f.column - 1)),
+        new vscode.Position(Math.max(0, f.line - 1), Math.max(0, f.column))
+      );
+      const msgAdvice =
+        effAdvice === "guarded"
+          ? "Guarded"
+          : effAdvice === "safe"
+            ? "Safe to adopt"
+            : "Needs guard";
+      const diag = new vscode.Diagnostic(
+        range,
+        `${f.title} — ${msgAdvice}`,
+        vscode.DiagnosticSeverity.Warning
+      );
+      diag.code = f.featureId;
+      diag.source = "Baseline";
+      (diag as any).docsUrl = (f as any).docsUrl;
+      (diag as any).suggestion = (f as any).suggestion;
+      if ((f as any).unsupportedPercent != null) {
+        (diag as any).unsupportedPercent = (f as any).unsupportedPercent;
+      }
+      diags.push(diag);
+    }
+    DIAG_COLLECTION.set(vscode.Uri.file(filePath), diags);
+  } catch (err) {
+    // Ignore individual file errors
+  }
+}
+
+function loadTargetsFromPath(filePath: string): string[] | undefined {
+  // Reuse logic from loadTargetsFromWorkspace but path-based
+  let dir = path.dirname(filePath);
+  const root = path.parse(dir).root;
+  while (true) {
+    const pkgPath = path.join(dir, "package.json");
+    try {
+      if (fs.existsSync(pkgPath)) {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+        const bl = pkg?.browserslist;
+        if (!bl) break;
+        if (Array.isArray(bl)) return bl as string[];
+        if (typeof bl === "string") return [bl as string];
+        if (typeof bl === "object" && bl.production)
+          return bl.production as string[];
+        break;
+      }
+    } catch {}
+    if (dir === root) break;
+    const next = path.dirname(dir);
+    if (next === dir) break;
+    dir = next;
+  }
+  return undefined;
+}
+
+function loadConfigLike(filePath: string): {
+  targets?: string[] | string;
+  unsupportedThreshold?: number;
+  features?: Record<string, boolean>;
+} | undefined {
+  let dir = path.dirname(filePath);
+  const root = path.parse(dir).root;
+  while (true) {
+    const p = path.join(dir, "baseline.config.json");
+    try {
+      if (fs.existsSync(p)) {
+        return JSON.parse(fs.readFileSync(p, "utf8"));
+      }
+    } catch {}
+    if (dir === root) break;
+    const next = path.dirname(dir);
+    if (next === dir) break;
+    dir = next;
+  }
+  return undefined;
+}
+
 function scheduleDiagnostics(doc: vscode.TextDocument, delay = 200) {
   const key = doc.uri.toString();
   const t = DEBOUNCE_TIMERS.get(key);
@@ -936,29 +1056,19 @@ export function activate(context: vscode.ExtensionContext) {
 
             for (const fileUri of files) {
               if (token.isCancellationRequested) return;
-
-              // Skip files that are already open
+              const fsPath = fileUri.fsPath;
               if (
-                openDocs.some(
-                  (doc) => doc.uri.toString() === fileUri.toString()
-                )
+                openDocs.some((d) => d.uri.toString() === fileUri.toString())
               ) {
+                // already covered above
                 continue;
               }
-
-              try {
-                const doc = await vscode.workspace.openTextDocument(fileUri);
-                computeDiagnostics(doc);
-                scannedCount++;
-
-                // Update progress every few files
-                if (scannedCount % 10 === 0) {
-                  progress.report({
-                    message: `Scanning workspace: ${scannedCount}/${files.length} files`,
-                  });
-                }
-              } catch (err) {
-                console.error(`Error scanning file ${fileUri.fsPath}:`, err);
+              await computeDiagnosticsForPath(fsPath);
+              scannedCount++;
+              if (scannedCount % 25 === 0) {
+                progress.report({
+                  message: `Scanning workspace: ${scannedCount}/${files.length} files`,
+                });
               }
             }
           }
