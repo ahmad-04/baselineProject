@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "Baseline Guard",
   "description": "Inline diagnostics and quick fixes for non-Baseline web features.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "ahmad-04",
   "license": "MIT",
   "repository": {
@@ -49,6 +49,10 @@
       {
         "command": "baseline.scanWorkspace",
         "title": "Baseline: Scan Workspace"
+      },
+      {
+        "command": "baseline.debugDump",
+        "title": "Baseline: Debug Dump Diagnostics"
       },
       {
         "command": "baseline.toggleScanMode",

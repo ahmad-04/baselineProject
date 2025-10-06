@@ -13,22 +13,208 @@ let analyze: (
   files: Iterable<FileRef>,
   options?: { targets?: string[] }
 ) => any[] = () => [];
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  ({ analyze } = require("@whoisahmad/baseline-tools-core"));
-} catch {
-  try {
-    // Fallback to bundled copy: dist/core-dist/index.js (copied during packaging)
+
+async function ensureAnalyzer(contextPath?: string) {
+  if (analyze !== (((): any[] => []) as any)) return; // already resolved
+  const tried: string[] = [];
+  const errors: Record<string, unknown> = {};
+  const attempt = (label: string, fn: () => void | Promise<void>) => {
+    tried.push(label);
+    return Promise.resolve()
+      .then(fn)
+      .catch((e) => {
+        errors[label] = e instanceof Error ? e.message : String(e);
+      });
+  };
+  // 1. Try runtime dependency (dev mode)
+  await attempt("pkg:@whoisahmad/baseline-tools-core", () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    ({ analyze } = require(path.resolve(__dirname, "core-dist/index.js")));
-  } catch (e) {
-    console.error("Baseline: failed to load analyzer module", e);
+    ({ analyze } = require("@whoisahmad/baseline-tools-core"));
+  });
+  // 2. Try bundled CJS require
+  if (analyze === (((): any[] => []) as any)) {
+    await attempt("bundled-require", () => {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      ({ analyze } = require(path.resolve(__dirname, "core-dist/index.js")));
+    });
+  }
+  // 3. Dynamic import (ESM) if still stub
+  if (analyze === (((): any[] => []) as any)) {
+    await attempt("bundled-dynamic-import", async () => {
+      const fileUrl = pathToFileUrlSafe(
+        path.resolve(__dirname, "core-dist/index.js")
+      );
+      const mod = await import(fileUrl);
+      if (mod?.analyze) analyze = mod.analyze;
+    });
+  }
+  // 4. If missing browserslist dependency inside VSIX, attempt self-heal copy from original source tree (if present)
+  if (analyze === (((): any[] => []) as any)) {
+    const coreDist = path.resolve(__dirname, "core-dist");
+    const browserslistPkg = path.join(
+      coreDist,
+      "node_modules",
+      "browserslist",
+      "package.json"
+    );
+    if (!fs.existsSync(browserslistPkg) && contextPath) {
+      const devNodeModules = path.resolve(
+        contextPath,
+        "../../packages/core/node_modules"
+      );
+      const candidate = path.join(devNodeModules, "browserslist");
+      if (fs.existsSync(candidate)) {
+        try {
+          const dest = path.join(coreDist, "node_modules", "browserslist");
+          fs.mkdirSync(path.dirname(dest), { recursive: true });
+          fs.cpSync(candidate, dest, { recursive: true });
+          // retry require after copy
+          await attempt("post-copy-require", () => {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            ({ analyze } = require(
+              path.resolve(__dirname, "core-dist/index.js")
+            ));
+          });
+        } catch {}
+      }
+    }
+  }
+  if (analyze === (((): any[] => []) as any)) {
+    console.error(
+      "Baseline: analyzer still unavailable after attempts:",
+      tried.join(", "),
+      "errors:",
+      errors
+    );
+  } else {
+    console.log("Baseline: analyzer resolved via attempts:", tried.join(", "));
   }
 }
-if (analyze === (((): any[] => []) as any)) {
-  console.error(
-    "Baseline: analyzer unavailable. Extension will be idle until the analyzer can be resolved."
-  );
+
+function pathToFileUrlSafe(p: string) {
+  const pref = process.platform === "win32" ? "/" + p.replace(/\\/g, "/") : p;
+  return new (require("url").URL)(`file://${pref}`);
+}
+
+// Kick off early attempt (non-blocking)
+ensureAnalyzer(__dirname).catch(() => void 0);
+
+// Lightweight fallback regex analyzer if core cannot be loaded.
+function fallbackAnalyze(files: Iterable<FileRef>): any[] {
+  const out: any[] = [];
+  const JS = [
+    {
+      id: "navigator-share",
+      re: /navigator\s*\.\s*share\s*\(/g,
+      title: "Web Share API",
+    },
+    {
+      id: "url-canparse",
+      re: /URL(?:\s+as\s+any)?\.canParse\s*\(/g,
+      title: "URL.canParse()",
+    },
+    { id: "urlpattern", re: /new\s+URLPattern\s*\(/g, title: "URLPattern" },
+    {
+      id: "view-transitions",
+      re: /document\.startViewTransition\s*\(/g,
+      title: "View Transitions API",
+    },
+    {
+      id: "file-system-access-picker",
+      re: /showOpenFilePicker\s*\(/g,
+      title: "showOpenFilePicker()",
+    },
+    {
+      id: "async-clipboard",
+      re: /navigator\s*\.\s*clipboard\s*\./g,
+      title: "Async Clipboard API",
+    },
+    {
+      id: "array-prototype-at",
+      re: /\b[A-Za-z_$][A-Za-z0-9_$]*\s*\.\s*at\s*\(/g,
+      title: "Array.prototype.at()",
+    },
+    {
+      id: "promise-any",
+      re: /Promise\.any\s*\(/g,
+      title: "Promise.any()",
+    },
+  ];
+  const HTML = [
+    { id: "html-popover", re: /\bpopover\b/g, title: "Popover attribute" },
+    { id: "html-dialog", re: /<dialog\b/gi, title: "<dialog> element" },
+    {
+      id: "import-maps",
+      re: /<script[^>]*type=["']importmap(?:-shim)?["'][^>]*>/gi,
+      title: "Import Maps",
+    },
+    {
+      id: "loading-lazy-attr",
+      re: /<(img|iframe)[^>]*\bloading=["']lazy["']/gi,
+      title: "Lazy loading attribute",
+    },
+  ];
+  const CSS = [
+    { id: "css-has", re: /:has\s*\(/g, title: "CSS :has()" },
+    {
+      id: "css-text-wrap-balance",
+      re: /text-wrap[^;]*balance/gi,
+      title: "CSS text-wrap: balance",
+    },
+    { id: "css-color-mix", re: /color-mix\s*\(/g, title: "CSS color-mix()" },
+    { id: "css-nesting", re: /\n\s*&[\s.:#\[>~+]/g, title: "CSS Nesting" },
+    { id: "css-modal-pseudo", re: /:modal\b/g, title: ":modal pseudo-class" },
+    {
+      id: "css-container-queries",
+      re: /@container\b/g,
+      title: "CSS Container Queries",
+    },
+    {
+      id: "css-color-oklch",
+      re: /oklch\s*\(|oklab\s*\(/g,
+      title: "CSS oklch()/oklab() colors",
+    },
+  ];
+  function push(
+    list: { id: string; re: RegExp; title: string }[],
+    file: FileRef
+  ) {
+    for (const it of list) {
+      it.re.lastIndex = 0;
+      let m: RegExpExecArray | null;
+      while ((m = it.re.exec(file.content))) {
+        const idx = m.index;
+        let line = 1,
+          col = 1;
+        for (let i = 0; i < idx; i++) {
+          if (file.content.charCodeAt(i) === 10) {
+            line++;
+            col = 1;
+          } else col++;
+        }
+        out.push({
+          file: file.path,
+          line,
+          column: col,
+          featureId: it.id,
+          title: it.title,
+          baseline: "partial",
+          advice: "needs-guard",
+        });
+      }
+    }
+  }
+  for (const f of files) {
+    const lower = f.path.toLowerCase();
+    if (/\.(js|ts|jsx|tsx)$/.test(lower)) push(JS, f);
+    else if (/\.(css|scss|sass)$/.test(lower)) push(CSS, f);
+    else if (/\.(html|htm)$/.test(lower)) push(HTML, f);
+  }
+  return out;
+}
+
+function usingFallback() {
+  return analyze === (((): any[] => []) as any);
 }
 let STATUS_ITEM: vscode.StatusBarItem | undefined;
 let SCAN_ON_CHANGE = true;
@@ -278,15 +464,20 @@ function loadConfig(doc: vscode.TextDocument): BaselineConfig | undefined {
 }
 
 function computeDiagnostics(doc: vscode.TextDocument) {
+  if (analyze === (((): any[] => []) as any)) {
+    // Try late binding in case activation race
+    void ensureAnalyzer(contextGlobal?.extensionPath).then(() => {
+      if (analyze !== (((): any[] => []) as any)) computeDiagnostics(doc);
+    });
+  }
   console.log(
     `Baseline: computeDiagnostics for ${doc.uri.fsPath} (${doc.languageId})`
   );
-  if (analyze === (((): any[] => []) as any)) {
-    // Analyzer not available, clear diagnostics and return gracefully
-    console.log(`Baseline: Analyzer not available for ${doc.uri.fsPath}`);
-    DIAG_COLLECTION.delete(doc.uri);
-    updateStatusBar(doc);
-    return;
+  const analyzerReady = analyze !== (((): any[] => []) as any);
+  if (!analyzerReady) {
+    console.log(
+      `Baseline: Analyzer not available yet for ${doc.uri.fsPath} - using fallback regex analyzer`
+    );
   }
   const fileRef = fileToFileRef(doc);
   if (!fileRef) {
@@ -379,7 +570,7 @@ function computeDiagnostics(doc: vscode.TextDocument) {
     DIAG_COLLECTION.set(doc.uri, diags);
     updateStatusBar(doc);
   };
-  if (USE_LSP && LSP_PROC) {
+  if (USE_LSP && LSP_PROC && analyzerReady) {
     const docPath = doc.uri.fsPath;
     const token = Math.random().toString(36).slice(2);
     console.log(
@@ -394,7 +585,9 @@ function computeDiagnostics(doc: vscode.TextDocument) {
         console.log(
           `Baseline: Using local analysis for ${docPath} due to LSP timeout`
         );
-        const localFindings = analyze([fileRef], { targets });
+        const localFindings = usingFallback()
+          ? fallbackAnalyze([fileRef])
+          : analyze([fileRef], { targets });
         console.log(
           `Baseline: Local analysis found ${localFindings.length} issues in ${docPath}`
         );
@@ -405,7 +598,9 @@ function computeDiagnostics(doc: vscode.TextDocument) {
     lspAnalyzeText(doc.uri.fsPath, fileRef.content, targets).then((res) => {
       if (!res) {
         if (PENDING_TOKENS.get(docPath) === token) {
-          const localFindings = analyze([fileRef], { targets });
+          const localFindings = usingFallback()
+            ? fallbackAnalyze([fileRef])
+            : analyze([fileRef], { targets });
           doSet(localFindings);
           APPLIED_TOKENS.set(docPath, token);
         }
@@ -416,9 +611,25 @@ function computeDiagnostics(doc: vscode.TextDocument) {
       APPLIED_TOKENS.set(docPath, token);
     });
   } else {
-    const findings = analyze([fileRef], { targets });
+    let findings: any[] = [];
+    if (!analyzerReady) {
+      findings = fallbackAnalyze([fileRef]);
+    } else {
+      findings = usingFallback()
+        ? fallbackAnalyze([fileRef])
+        : analyze([fileRef], { targets });
+      if (findings.length === 0) {
+        const fb = fallbackAnalyze([fileRef]);
+        if (fb.length) {
+          console.log(
+            `Baseline: primary analyzer returned 0 findings; adopting fallback findings (${fb.length}) for ${fileRef.path}`
+          );
+          findings = fb;
+        }
+      }
+    }
     console.log(
-      `Baseline: analyzed ${fileRef.path} (${doc.languageId}) - found ${findings.length} items`
+      `Baseline: analyzed ${fileRef.path} (${doc.languageId}) - found ${findings.length} items (analyzerReady=${analyzerReady})`
     );
     doSet(findings);
   }
@@ -446,11 +657,21 @@ async function computeDiagnosticsForPath(filePath: string) {
       console.log(`Baseline: Skipping unsupported file extension: ${ext}`);
       return; // Unsupported
     }
-    if (analyze === (((): any[] => []) as any)) return;
     const content = fs.readFileSync(filePath, "utf8");
-    const findings = analyze([{ path: filePath, content }], {
-      targets: loadTargetsFromPath(filePath),
-    });
+    const findings = usingFallback()
+      ? fallbackAnalyze([{ path: filePath, content }])
+      : analyze([{ path: filePath, content }], {
+          targets: loadTargetsFromPath(filePath),
+        });
+    if (findings.length === 0) {
+      const fb = fallbackAnalyze([{ path: filePath, content }]);
+      if (fb.length) {
+        console.log(
+          `Baseline: primary analyzer returned 0 findings; adopting fallback findings (${fb.length}) for ${filePath}`
+        );
+        (findings as any[]).push(...fb); // replace semantics; we logged length
+      }
+    }
     console.log(
       `Baseline: analyzed ${filePath} (file) - found ${findings.length} items`
     );
@@ -943,6 +1164,8 @@ if ('${apiName}' in window) {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+  // Ensure analyzer dependencies are present for packaged VSIX
+  void ensureAnalyzer(context.extensionPath);
   startLspIfEnabled(context);
   // Load persisted or configured scan mode
   try {
@@ -1204,7 +1427,11 @@ export function activate(context: vscode.ExtensionContext) {
             );
           }
           if (!edits) {
-            const findings = analyze([fileRef], { targets }) as any[];
+            const findings = (
+              usingFallback()
+                ? fallbackAnalyze([fileRef])
+                : analyze([fileRef], { targets })
+            ) as any[];
             // Debug: Log findings to console to see what's being detected
             console.log(
               "Baseline findings:",
@@ -1609,6 +1836,34 @@ function matchPattern(pattern, url) {
       vscode.window.showInformationMessage(
         "Baseline: targets/threshold updated."
       );
+    }),
+    vscode.commands.registerCommand("baseline.debugDump", async () => {
+      try {
+        // Collect URIs from visible editors + workspace text documents
+        const seen = new Set<string>();
+        const lines: string[] = [];
+        const pushUri = (uri: vscode.Uri) => {
+          if (seen.has(uri.toString())) return;
+          seen.add(uri.toString());
+          const diags = vscode.languages
+            .getDiagnostics(uri)
+            .filter((d) => d.source === "Baseline");
+          lines.push(`${uri.fsPath} :: ${diags.length}`);
+        };
+        for (const ed of vscode.window.visibleTextEditors)
+          pushUri(ed.document.uri);
+        for (const doc of vscode.workspace.textDocuments) pushUri(doc.uri);
+        // Heuristic: also scan recent files in workspace by looking for html/css/js/ts
+        // (Skip heavy FS walk; rely on already-touched docs.)
+        console.log("Baseline Debug Dump (file :: count)\n" + lines.join("\n"));
+        vscode.window.showInformationMessage(
+          `Baseline: Debug dump logged (${lines.length} files). See console.`
+        );
+      } catch (e: any) {
+        vscode.window.showErrorMessage(
+          `Baseline debug dump failed: ${e?.message || e}`
+        );
+      }
     })
   );
   // Initial scan for currently open docs

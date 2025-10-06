@@ -62,3 +62,40 @@ if (fs.existsSync(nmSrc)) {
     "No core node_modules found; analyzer may have missing dependencies in VSIX"
   );
 }
+
+// Ensure critical packages that may be hoisted to the repo root are included.
+// We resolve them from the current process resolution graph.
+const MUST_HAVE = [
+  "browserslist",
+  "caniuse-lite",
+  "web-features",
+  "@typescript-eslint/typescript-estree",
+];
+
+function packageRoot(resolvedFile) {
+  let dir = path.dirname(resolvedFile);
+  while (dir && dir !== path.parse(dir).root) {
+    const pkgFile = path.join(dir, "package.json");
+    if (fs.existsSync(pkgFile)) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return undefined;
+}
+
+for (const mod of MUST_HAVE) {
+  try {
+    const entry = require.resolve(mod);
+    const root = packageRoot(entry);
+    if (!root) continue;
+    const destDir = path.join(nmDest, mod.replace(/\\/g, "/"));
+    if (fs.existsSync(destDir)) continue; // already copied from local node_modules
+    log(`Adding hoisted dependency '${mod}' from ${root}`);
+    copyRecursive(root, destDir);
+  } catch (e) {
+    log(`Could not resolve optional dependency '${mod}': ${e?.message || e}`);
+  }
+}
+
+log("bundle-core complete");
