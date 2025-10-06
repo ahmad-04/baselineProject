@@ -188,7 +188,13 @@ function fileToFileRef(doc: vscode.TextDocument): FileRef | null {
     "scss",
     "html",
   ];
-  if (!exts.includes(lang)) return null;
+  console.log(
+    `Baseline: fileToFileRef - File ${doc.uri.fsPath}, Language: ${lang}`
+  );
+  if (!exts.includes(lang)) {
+    console.log(`Baseline: Skipping unsupported language: ${lang}`);
+    return null;
+  }
   return { path: doc.uri.fsPath, content: doc.getText() };
 }
 
@@ -272,32 +278,58 @@ function loadConfig(doc: vscode.TextDocument): BaselineConfig | undefined {
 }
 
 function computeDiagnostics(doc: vscode.TextDocument) {
+  console.log(
+    `Baseline: computeDiagnostics for ${doc.uri.fsPath} (${doc.languageId})`
+  );
   if (analyze === (((): any[] => []) as any)) {
     // Analyzer not available, clear diagnostics and return gracefully
+    console.log(`Baseline: Analyzer not available for ${doc.uri.fsPath}`);
     DIAG_COLLECTION.delete(doc.uri);
     updateStatusBar(doc);
     return;
   }
   const fileRef = fileToFileRef(doc);
   if (!fileRef) {
+    console.log(
+      `Baseline: No fileRef created for ${doc.uri.fsPath} (${doc.languageId})`
+    );
     DIAG_COLLECTION.delete(doc.uri);
     updateStatusBar(doc);
     return;
   }
+  console.log(
+    `Baseline: Created fileRef for ${fileRef.path} with content length ${fileRef.content.length} bytes`
+  );
   const cfg = loadConfig(doc);
   const vs = getVsCodeSettings();
   const targets = loadTargetsFromWorkspace(doc);
   const doSet = (findings: any[]) => {
+    console.log(
+      `Baseline: doSet processing ${findings.length} findings for ${doc.uri.fsPath}`
+    );
     const diags: vscode.Diagnostic[] = [];
     for (const f of findings) {
-      if (cfg?.features && cfg.features[f.featureId] === false) continue;
+      console.log(
+        `Baseline: Processing finding: ${f.featureId} (${f.title}) in ${doc.uri.fsPath}, baseline=${f.baseline}, advice=${(f as any).advice || "undefined"}`
+      );
+      if (cfg?.features && cfg.features[f.featureId] === false) {
+        console.log(`Baseline: Skipping disabled feature: ${f.featureId}`);
+        continue;
+      }
       const showSafe = !!vs.showSafe;
-      if ((f as any).advice === "guarded") continue;
+      console.log(`Baseline: showSafe setting: ${showSafe}`);
+      if ((f as any).advice === "guarded") {
+        console.log(`Baseline: Skipping guarded feature: ${f.featureId}`);
+        continue;
+      }
       const threshold =
         typeof vs.unsupportedThreshold === "number" &&
         vs.unsupportedThreshold >= 0
           ? vs.unsupportedThreshold
           : cfg?.unsupportedThreshold;
+      console.log(
+        `Baseline: Using threshold: ${threshold !== undefined ? threshold : "undefined"}`
+      );
       const effAdvice = (() => {
         const a = (f as any).advice as string | undefined;
         if (
@@ -309,8 +341,16 @@ function computeDiagnostics(doc: vscode.TextDocument) {
           return "safe";
         return a || "needs-guard";
       })();
+      console.log(
+        `Baseline: Effective advice: ${effAdvice} for ${f.featureId}`
+      );
       // Do not show diagnostics for safe findings
-  if (effAdvice === "safe" && !showSafe) continue;
+      if (effAdvice === "safe" && !showSafe) {
+        console.log(
+          `Baseline: Skipping safe feature (showSafe=${showSafe}): ${f.featureId}`
+        );
+        continue;
+      }
       const range = toRange(doc, f.line, f.column);
       const msgAdvice =
         effAdvice === "guarded"
@@ -342,13 +382,22 @@ function computeDiagnostics(doc: vscode.TextDocument) {
   if (USE_LSP && LSP_PROC) {
     const docPath = doc.uri.fsPath;
     const token = Math.random().toString(36).slice(2);
+    console.log(
+      `Baseline: LSP analysis for ${docPath} (${doc.languageId}), token: ${token}`
+    );
     PENDING_TOKENS.set(docPath, token);
     setTimeout(() => {
       if (
         PENDING_TOKENS.get(docPath) === token &&
         APPLIED_TOKENS.get(docPath) !== token
       ) {
+        console.log(
+          `Baseline: Using local analysis for ${docPath} due to LSP timeout`
+        );
         const localFindings = analyze([fileRef], { targets });
+        console.log(
+          `Baseline: Local analysis found ${localFindings.length} issues in ${docPath}`
+        );
         doSet(localFindings);
         APPLIED_TOKENS.set(docPath, token);
       }
@@ -368,6 +417,9 @@ function computeDiagnostics(doc: vscode.TextDocument) {
     });
   } else {
     const findings = analyze([fileRef], { targets });
+    console.log(
+      `Baseline: analyzed ${fileRef.path} (${doc.languageId}) - found ${findings.length} items`
+    );
     doSet(findings);
   }
 }
@@ -387,12 +439,21 @@ async function computeDiagnosticsForPath(filePath: string) {
       ".html": "html",
     };
     const languageId = langMap[ext];
-    if (!languageId) return; // Unsupported
+    console.log(
+      `Baseline: computeDiagnosticsForPath - File ${filePath}, Extension: ${ext}, Language: ${languageId || "UNSUPPORTED"}`
+    );
+    if (!languageId) {
+      console.log(`Baseline: Skipping unsupported file extension: ${ext}`);
+      return; // Unsupported
+    }
     if (analyze === (((): any[] => []) as any)) return;
     const content = fs.readFileSync(filePath, "utf8");
     const findings = analyze([{ path: filePath, content }], {
       targets: loadTargetsFromPath(filePath),
     });
+    console.log(
+      `Baseline: analyzed ${filePath} (file) - found ${findings.length} items`
+    );
     const cfg = loadConfigLike(filePath);
     const vs = getVsCodeSettings();
     const diags: vscode.Diagnostic[] = [];
@@ -413,7 +474,7 @@ async function computeDiagnosticsForPath(filePath: string) {
         (f as any).unsupportedPercent <= threshold
           ? "safe"
           : a || "needs-guard";
-  if (effAdvice === "safe" && !showSafe) continue;
+      if (effAdvice === "safe" && !showSafe) continue;
       const range = new vscode.Range(
         new vscode.Position(Math.max(0, f.line - 1), Math.max(0, f.column - 1)),
         new vscode.Position(Math.max(0, f.line - 1), Math.max(0, f.column))
@@ -470,11 +531,13 @@ function loadTargetsFromPath(filePath: string): string[] | undefined {
   return undefined;
 }
 
-function loadConfigLike(filePath: string): {
-  targets?: string[] | string;
-  unsupportedThreshold?: number;
-  features?: Record<string, boolean>;
-} | undefined {
+function loadConfigLike(filePath: string):
+  | {
+      targets?: string[] | string;
+      unsupportedThreshold?: number;
+      features?: Record<string, boolean>;
+    }
+  | undefined {
   let dir = path.dirname(filePath);
   const root = path.parse(dir).root;
   while (true) {
@@ -985,6 +1048,10 @@ export function activate(context: vscode.ExtensionContext) {
       { providedCodeActionKinds: CodeActionProvider.providedCodeActionKinds }
     ),
     vscode.commands.registerCommand("baseline.scanWorkspace", async () => {
+      const vs = getVsCodeSettings();
+      console.log(
+        `Baseline: workspace scan initiated. Settings: showSafe=${vs.showSafe}`
+      );
       vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -1056,12 +1123,29 @@ export function activate(context: vscode.ExtensionContext) {
               excludeGlob
             );
 
+            console.log(
+              `Baseline: Found ${files.length} files matching pattern in workspace ${workspaceFolder.name}`
+            );
+            // Log file types for debugging
+            const typeCount = files.reduce(
+              (acc, file) => {
+                const ext = path.extname(file.fsPath).toLowerCase();
+                acc[ext] = (acc[ext] || 0) + 1;
+                return acc;
+              },
+              {} as Record<string, number>
+            );
+            console.log(`Baseline: File types found:`, typeCount);
+
             for (const fileUri of files) {
               if (token.isCancellationRequested) return;
               const fsPath = fileUri.fsPath;
+              const ext = path.extname(fsPath).toLowerCase();
+              console.log(`Baseline: Processing ${fsPath} (${ext})`);
               if (
                 openDocs.some((d) => d.uri.toString() === fileUri.toString())
               ) {
+                console.log(`Baseline: Skipping already open file ${fsPath}`);
                 // already covered above
                 continue;
               }
@@ -1548,3 +1632,4 @@ function updateStatusBar(doc: vscode.TextDocument) {
   const lsp = USE_LSP ? "lsp" : "local";
   STATUS_ITEM.text = `$(shield) Baseline: ${count} • ${tgt} • ${mode} • ${lsp}`;
 }
+// Adding more logs to debug HTML/CSS detection issues
