@@ -72,8 +72,14 @@ cd baselineProject
 npm install
 npm run build
 
-# Test CLI locally
-node packages/cli/dist/index.js examples/demo-repo --report baseline-report.html --exit-zero
+# Test CLI locally (development mode)
+node packages/cli/dist/index.js examples/demo-repo/src --report baseline-report.html --exit-zero
+
+# Or use the demo repo's convenient scripts
+cd examples/demo-repo
+npm run scan                    # Pretty console output
+npm run scan:json              # JSON output to console  
+npm run scan:report            # Generate JSON report file
 
 # Package VS Code extension
 npm run vsce:package
@@ -119,6 +125,31 @@ Changed files only (for PR workflows):
 ```bash
 npx @whoisahmad/baseline-tools-cli . --changed --since origin/main --exit-zero
 ```
+
+## 🎯 Try the Demo
+
+Want to see the scanner in action? Use the included demo repository:
+
+```bash
+# Clone the project (if you haven't already)
+git clone https://github.com/ahmad-04/baselineProject.git
+cd baselineProject
+npm install && npm run build
+
+# Run the scanner on the demo files
+cd examples/demo-repo
+
+# Pretty console output (shows all detected features)
+npm run scan
+
+# Generate an interactive HTML report
+node ../../packages/cli/dist/index.js src --report demo-report.html --exit-zero
+
+# Generate SARIF for security tooling
+node ../../packages/cli/dist/index.js src --report demo-report.sarif --exit-zero
+```
+
+The demo contains **30 modern web features** across JavaScript, CSS, and HTML files, demonstrating the scanner's detection capabilities.
 
 ## 🎨 VS Code Extension Features
 
@@ -253,17 +284,39 @@ CI runs tests on Windows, macOS, and Linux across Node 18, 20, and 22.
 
 The `examples/demo-repo` includes sample code that triggers various findings:
 
+### Quick Demo Commands
+
 ```bash
-# Pretty scan (non-failing)
+# From the project root after npm install && npm run build
+cd examples/demo-repo
+
+# Pretty scan (non-failing) - shows all 30 detected features
 npm run scan
 
 # Strict scan (exits non-zero when issues found)
 npm run scan:strict
 
-# Generate reports
+# JSON output to console
 npm run scan:json
+
+# Generate JSON report file
 npm run scan:report
+
+# Generate interactive HTML report
+node ../../packages/cli/dist/index.js src --report demo-report.html --exit-zero
+
+# Generate SARIF for GitHub Code Scanning
+node ../../packages/cli/dist/index.js src --report demo-report.sarif --exit-zero
 ```
+
+### What the Demo Detects
+
+The demo repository contains **30 modern web features** including:
+- **JavaScript APIs**: `structuredClone()`, `URL.canParse()`, Web Share API, View Transitions
+- **CSS Features**: `:has()`, `color-mix()`, container queries, CSS nesting
+- **HTML Elements**: `<dialog>`, `popover` attribute, import maps, lazy loading
+
+Perfect for testing the scanner and understanding the output formats!
 
 ## 📚 Documentation
 

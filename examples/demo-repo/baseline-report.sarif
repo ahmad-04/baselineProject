@@ -22,6 +22,20 @@
               }
             },
             {
+              "id": "url-canparse",
+              "name": "URL.canParse()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
+              "shortDescription": {
+                "text": "URL.canParse()"
+              },
+              "fullDescription": {
+                "text": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
               "id": "navigator-share",
               "name": "Web Share API",
               "helpUri": "https://developer.mozilla.org/docs/Web/API/Navigator/share",
@@ -36,14 +50,70 @@
               }
             },
             {
-              "id": "url-canparse",
-              "name": "URL.canParse()",
-              "helpUri": "https://developer.mozilla.org/docs/Web/API/URL/canParse_static",
+              "id": "array-prototype-at",
+              "name": "Array.prototype.at()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array/at",
               "shortDescription": {
-                "text": "URL.canParse()"
+                "text": "Array.prototype.at()"
               },
               "fullDescription": {
-                "text": "Fallback: try/catch new URL(...) for validation. (about 0% of your targets may lack support)"
+                "text": "Fallback: use arr[index >= 0 ? index : arr.length + index] for negatives."
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "promise-any",
+              "name": "Promise.any()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise/any",
+              "shortDescription": {
+                "text": "Promise.any()"
+              },
+              "fullDescription": {
+                "text": "Fallback: emulate with Promise.race on wrapped promises or a small polyfill."
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "urlpattern",
+              "name": "URLPattern",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/URL_Pattern_API",
+              "shortDescription": {
+                "text": "URLPattern"
+              },
+              "fullDescription": {
+                "text": "Fallback: use the urlpattern-polyfill or Regex-based matching."
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "view-transitions",
+              "name": "View Transitions API",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/Document/startViewTransition",
+              "shortDescription": {
+                "text": "View Transitions API"
+              },
+              "fullDescription": {
+                "text": "Guard: if ('startViewTransition' in document) { ... } else { ... } (about 22% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "async-clipboard",
+              "name": "Async Clipboard API",
+              "helpUri": "https://developer.mozilla.org/docs/Web/API/Clipboard_API",
+              "shortDescription": {
+                "text": "Async Clipboard API"
+              },
+              "fullDescription": {
+                "text": "Guard: if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(...) } else { /* fallback */ } (about 0% of your targets may lack support)"
               },
               "properties": {
                 "baseline": "partial"
@@ -64,6 +134,48 @@
               }
             },
             {
+              "id": "html-dialog",
+              "name": "<dialog> element",
+              "helpUri": "https://developer.mozilla.org/docs/Web/HTML/Element/dialog",
+              "shortDescription": {
+                "text": "<dialog> element"
+              },
+              "fullDescription": {
+                "text": "Provide a dialog polyfill or non-modal fallback when unsupported; ensure accessible focus management. (about 0% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "import-maps",
+              "name": "Import Maps",
+              "helpUri": "https://developer.mozilla.org/docs/Web/HTML/Element/script/type/importmap",
+              "shortDescription": {
+                "text": "Import Maps"
+              },
+              "fullDescription": {
+                "text": "Guard or provide bundler fallback for environments without native import maps. (about 0% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "loading-lazy-attr",
+              "name": "Lazy loading attribute",
+              "helpUri": "https://developer.mozilla.org/docs/Web/HTML/Element/img#attr-loading",
+              "shortDescription": {
+                "text": "Lazy loading attribute"
+              },
+              "fullDescription": {
+                "text": "Use for non-critical images/iframes; set hero media to eager to protect LCP. (about 0% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
               "id": "css-has",
               "name": "CSS :has()",
               "helpUri": "https://developer.mozilla.org/docs/Web/CSS/:has",
@@ -71,7 +183,63 @@
                 "text": "CSS :has()"
               },
               "fullDescription": {
-                "text": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors. (about 6% of your targets may lack support)"
+                "text": "Use progressive enhancement: avoid relying on :has() for critical UI; restructure selectors. (about 0% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "css-text-wrap-balance",
+              "name": "CSS text-wrap: balance",
+              "helpUri": "https://developer.mozilla.org/docs/Web/CSS/text-wrap",
+              "shortDescription": {
+                "text": "CSS text-wrap: balance"
+              },
+              "fullDescription": {
+                "text": "Use progressive enhancement; avoid relying on balance for critical layout; provide reasonable default wrapping. (about 24% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "css-color-mix",
+              "name": "CSS color-mix()",
+              "helpUri": "https://developer.mozilla.org/docs/Web/CSS/color_value/color-mix",
+              "shortDescription": {
+                "text": "CSS color-mix()"
+              },
+              "fullDescription": {
+                "text": "Provide fallback colors or precomputed values when color-mix() is unsupported. (about 20% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "css-nesting",
+              "name": "CSS Nesting",
+              "helpUri": "https://developer.mozilla.org/docs/Web/CSS/CSS_nesting",
+              "shortDescription": {
+                "text": "CSS Nesting"
+              },
+              "fullDescription": {
+                "text": "Use PostCSS Nesting or target supported environments. (about 30% of your targets may lack support)"
+              },
+              "properties": {
+                "baseline": "partial"
+              }
+            },
+            {
+              "id": "css-modal-pseudo",
+              "name": ":modal pseudo-class",
+              "helpUri": "https://developer.mozilla.org/docs/Web/CSS/:modal",
+              "shortDescription": {
+                "text": ":modal pseudo-class"
+              },
+              "fullDescription": {
+                "text": "Guard UI for browsers without <dialog> modal support; provide non-modal fallback. (about 0% of your targets may lack support)"
               },
               "properties": {
                 "baseline": "partial"
@@ -85,7 +253,7 @@
                 "text": "CSS Container Queries"
               },
               "fullDescription": {
-                "text": "Provide responsive fallbacks using media queries when container queries are unsupported. (about 6% of your targets may lack support)"
+                "text": "Provide responsive fallbacks using media queries when container queries are unsupported. (about 0% of your targets may lack support)"
               },
               "properties": {
                 "baseline": "partial"
@@ -119,27 +287,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/app.ts"
-                },
-                "region": {
-                  "startLine": 3,
-                  "startColumn": 29
-                }
-              }
-            }
-          ]
-        },
-        {
-          "ruleId": "structured-clone",
-          "level": "note",
-          "message": {
-            "text": "structuredClone() — safe"
-          },
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "src/app.ts"
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
                 },
                 "region": {
                   "startLine": 4,
@@ -150,16 +298,36 @@
           ]
         },
         {
-          "ruleId": "navigator-share",
-          "level": "warning",
+          "ruleId": "url-canparse",
+          "level": "note",
           "message": {
-            "text": "Web Share API — guarded"
+            "text": "URL.canParse() — safe"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/app.ts"
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 9,
+                  "startColumn": 34
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "navigator-share",
+          "level": "warning",
+          "message": {
+            "text": "Web Share API — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
                 },
                 "region": {
                   "startLine": 12,
@@ -171,19 +339,179 @@
         },
         {
           "ruleId": "url-canparse",
-          "level": "warning",
+          "level": "note",
           "message": {
-            "text": "URL.canParse() — guarded"
+            "text": "URL.canParse() — safe"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/app.ts"
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
                 },
                 "region": {
-                  "startLine": 9,
-                  "startColumn": 34
+                  "startLine": 17,
+                  "startColumn": 45
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "navigator-share",
+          "level": "warning",
+          "message": {
+            "text": "Web Share API — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 20,
+                  "startColumn": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "array-prototype-at",
+          "level": "warning",
+          "message": {
+            "text": "Array.prototype.at() — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 31
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "promise-any",
+          "level": "warning",
+          "message": {
+            "text": "Promise.any() — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 27,
+                  "startColumn": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "urlpattern",
+          "level": "warning",
+          "message": {
+            "text": "URLPattern — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 33,
+                  "startColumn": 13
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "view-transitions",
+          "level": "warning",
+          "message": {
+            "text": "View Transitions API — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 38,
+                  "startColumn": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "view-transitions",
+          "level": "warning",
+          "message": {
+            "text": "View Transitions API — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 44,
+                  "startColumn": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "async-clipboard",
+          "level": "note",
+          "message": {
+            "text": "Async Clipboard API — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 53,
+                  "startColumn": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "async-clipboard",
+          "level": "note",
+          "message": {
+            "text": "Async Clipboard API — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/app.ts"
+                },
+                "region": {
+                  "startLine": 55,
+                  "startColumn": 3
                 }
               }
             }
@@ -199,10 +527,10 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/index.html"
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/index.html"
                 },
                 "region": {
-                  "startLine": 9,
+                  "startLine": 10,
                   "startColumn": 13
                 }
               }
@@ -210,19 +538,119 @@
           ]
         },
         {
-          "ruleId": "css-has",
-          "level": "warning",
+          "ruleId": "html-dialog",
+          "level": "note",
           "message": {
-            "text": "CSS :has() — needs-guard"
+            "text": "<dialog> element — safe"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/styles.css"
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/index.html"
                 },
                 "region": {
-                  "startLine": 2,
+                  "startLine": 13,
+                  "startColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "import-maps",
+          "level": "note",
+          "message": {
+            "text": "Import Maps — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/index.html"
+                },
+                "region": {
+                  "startLine": 21,
+                  "startColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "loading-lazy-attr",
+          "level": "note",
+          "message": {
+            "text": "Lazy loading attribute — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/index.html"
+                },
+                "region": {
+                  "startLine": 30,
+                  "startColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "loading-lazy-attr",
+          "level": "note",
+          "message": {
+            "text": "Lazy loading attribute — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/index.html"
+                },
+                "region": {
+                  "startLine": 31,
+                  "startColumn": 5
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-has",
+          "level": "note",
+          "message": {
+            "text": "CSS :has() — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-has",
+          "level": "note",
+          "message": {
+            "text": "CSS :has() — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 4,
                   "startColumn": 6
                 }
               }
@@ -230,19 +658,159 @@
           ]
         },
         {
-          "ruleId": "css-container-queries",
+          "ruleId": "css-text-wrap-balance",
           "level": "warning",
           "message": {
-            "text": "CSS Container Queries — needs-guard"
+            "text": "CSS text-wrap: balance — needs-guard"
           },
           "locations": [
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/styles.css"
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
                 },
                 "region": {
-                  "startLine": 6,
+                  "startLine": 8,
+                  "startColumn": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-text-wrap-balance",
+          "level": "warning",
+          "message": {
+            "text": "CSS text-wrap: balance — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 11,
+                  "startColumn": 3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-color-mix",
+          "level": "warning",
+          "message": {
+            "text": "CSS color-mix() — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 14,
+                  "startColumn": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-color-mix",
+          "level": "warning",
+          "message": {
+            "text": "CSS color-mix() — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-nesting",
+          "level": "warning",
+          "message": {
+            "text": "CSS Nesting — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 24,
+                  "startColumn": 53
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-modal-pseudo",
+          "level": "note",
+          "message": {
+            "text": ":modal pseudo-class — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 30,
+                  "startColumn": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-modal-pseudo",
+          "level": "note",
+          "message": {
+            "text": ":modal pseudo-class — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 31,
+                  "startColumn": 7
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-container-queries",
+          "level": "note",
+          "message": {
+            "text": "CSS Container Queries — safe"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 36,
                   "startColumn": 1
                 }
               }
@@ -259,11 +827,51 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src/styles.css"
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
                 },
                 "region": {
-                  "startLine": 3,
+                  "startLine": 5,
                   "startColumn": 21
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-color-oklch",
+          "level": "warning",
+          "message": {
+            "text": "CSS oklch()/oklab() colors — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 44,
+                  "startColumn": 10
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "css-color-oklch",
+          "level": "warning",
+          "message": {
+            "text": "CSS oklch()/oklab() colors — needs-guard"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "C:/Users/DELL/OneDrive/Documents/GitHub/baselineProject/examples/demo-repo/src/styles.css"
+                },
+                "region": {
+                  "startLine": 47,
+                  "startColumn": 10
                 }
               }
             }

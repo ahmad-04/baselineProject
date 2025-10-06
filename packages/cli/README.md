@@ -10,53 +10,36 @@ Command-line scanner for detecting non-Baseline web platform features in JavaScr
 
 
 
-## 🚀 Quick Start## Install
+## 🚀 Quick Start
 
-
-
-### InstallationGlobal (optional):
-
-
-
-```bash```bash
-
-# Install as dev dependency (recommended)npm install -g @whoisahmad/baseline-tools-cli
-
-npm install -D @whoisahmad/baseline-tools-cli```
-
-
-
-# Install globally (optional)Project dev dependency:
-
-npm install -g @whoisahmad/baseline-tools-cli
+### Installation
 
 ```bash
+# Install as dev dependency (recommended)
+npm install -D @whoisahmad/baseline-tools-cli
 
-# Run without installationnpm install -D @whoisahmad/baseline-tools-cli
+# Install globally (optional)
+npm install -g @whoisahmad/baseline-tools-cli
 
-npx @whoisahmad/baseline-tools-cli ./src```
-
+# Run without installation
+npx @whoisahmad/baseline-tools-cli ./src
 ```
-
-Ad-hoc (no install):
 
 ### Basic Usage
 
 ```bash
-
-```bashnpx baseline-scan .
-
-# Scan current directory with pretty output```
-
+# Scan current directory with pretty output
 baseline-scan .
 
-## Usage
-
 # Generate HTML report (non-failing)
+baseline-scan ./src --report baseline-report.html --exit-zero
 
-baseline-scan ./src --report baseline-report.html --exit-zero```bash
+# Generate SARIF for GitHub Code Scanning
+baseline-scan ./src --report baseline-report.sarif --exit-zero
 
-baseline-scan <path> [options]
+# JSON output for programmatic use
+baseline-scan ./src --json --exit-zero
+```
 
 # Generate SARIF for GitHub Code Scanning```
 
@@ -64,37 +47,47 @@ baseline-scan ./src --report baseline-report.sarif --exit-zero
 
 Key options:
 
-# JSON output for programmatic use
+```
 
-baseline-scan ./src --json --exit-zero| Flag                          | Description                                              |
+## 🛠️ CLI Reference
 
-```| ----------------------------- | -------------------------------------------------------- |
+```bash
+baseline-scan <path> [options]
+```
 
-| `--json`                      | Print full JSON report to stdout.                        |
+### Options
 
-## 🛠️ CLI Reference| `--report <file>`             | Write report (JSON / HTML / SARIF based on extension).   |
-
-| `--exit-zero`                 | Force exit code 0 (CI summaries without failing builds). |
-
-```bash| `--files <csv>`               | Restrict scan to specific globs (e.g., changed files).   |
-
-baseline-scan <path> [options]| `--unsupported-threshold <n>` | Reclassify "needs-guard" to safe if unsupported% ≤ n.    |
-
-```| `--config <path>`             | Explicit `baseline.config.json` path.                    |
-
-| `--changed`                   | Scan only changed (vs HEAD) + untracked files.           |
-
-### Options| `--since <ref>`               | Base ref for `--changed` (default HEAD).                 |
-
-| `--cache`                     | Enable content-hash cache (v3).                          |
-
-| Flag                          | Description                                              || `--cache-file <path>`         | Custom cache filename.                                   |
-
+| Flag                          | Description                                              |
 | ----------------------------- | -------------------------------------------------------- |
-
-| `--json`                      | Print full JSON report to stdout                        |## Examples
-
+| `--json`                      | Print full JSON report to stdout                        |
 | `--report <file>`             | Write report (JSON / HTML / SARIF based on extension)   |
+| `--exit-zero`                 | Force exit code 0 (CI summaries without failing builds) |
+| `--files <csv>`               | Restrict scan to specific globs (e.g., changed files)   |
+| `--unsupported-threshold <n>` | Reclassify "needs-guard" to safe if unsupported% ≤ n    |
+| `--config <path>`             | Explicit `baseline.config.json` path                    |
+| `--changed`                   | Scan only changed (vs HEAD) + untracked files           |
+| `--since <ref>`               | Base ref for `--changed` (default HEAD)                 |
+| `--cache`                     | Enable content-hash cache (v3)                          |
+| `--cache-file <path>`         | Custom cache filename                                    |
+
+## 📋 Examples
+
+### Different Ways to Run
+
+```bash
+# 1. Use published package (recommended for end users)
+npx @whoisahmad/baseline-tools-cli ./src --exit-zero
+
+# 2. Install globally, then use binary name
+npm install -g @whoisahmad/baseline-tools-cli
+baseline-scan ./src --exit-zero
+
+# 3. Development mode (when working on this project)
+node packages/cli/dist/index.js ./src --exit-zero
+
+# 4. Using demo repository scripts
+cd examples/demo-repo && npm run scan
+```
 
 | `--exit-zero`                 | Force exit code 0 (CI summaries without failing builds) |Pretty scan (non-failing):
 
@@ -386,9 +379,19 @@ baseline-scan src --unsupported-threshold 10
 
 ### Common Issues
 
+**"baseline-scan command not found":**
+- Use the full package name: `npx @whoisahmad/baseline-tools-cli` instead of `npx baseline-scan`
+- Or install globally first: `npm install -g @whoisahmad/baseline-tools-cli`
+- The binary name is `baseline-scan` but the package name is `@whoisahmad/baseline-tools-cli`
+
 **No files found to scan:**
 - Check that the path exists and contains supported file types (`.js`, `.ts`, `.css`, `.html`)
 - Verify ignore patterns in `baseline.config.json` aren't too broad
+
+**Development vs Production:**
+- In development mode: Use `node packages/cli/dist/index.js <path>`
+- With published package: Use `npx @whoisahmad/baseline-tools-cli <path>`
+- For demo repo: Use the convenient npm scripts in `examples/demo-repo`
 
 **Cache issues:**
 - Delete cache file and re-run: `rm .baseline-scan-cache.json`
