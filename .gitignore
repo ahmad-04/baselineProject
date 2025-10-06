@@ -1,3 +1,38 @@
+# Node & build artifacts
+node_modules/
+packages/**/node_modules/
+dist/
+packages/**/dist/
+*.tsbuildinfo
+*.log
+coverage/
+.nyc_output/
+
+# Reports (regenerate via CLI, not tracked)
+baseline-report.html
+baseline-report.json
+baseline-report.sarif
+
+# VS Code extension packaged artifact (built locally when needed)
+*.vsix
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Cache files
+.baseline-scan-cache.json
+
+# Temp / scratch
+temp-extension/
+tmp/
+*.tmp
 # Node
 node_modules/
 dist/
