@@ -64,7 +64,8 @@ for (const k of keepFields) if (pkg[k] != null) slimPkg[k] = pkg[k];
 // Ensure main points to dist and remove dev-only fields
 delete slimPkg.scripts;
 delete slimPkg.devDependencies;
-delete slimPkg.files;
+// Explicitly whitelist packaged files to avoid including monorepo extras
+slimPkg.files = ["dist/**", "README.md", "LICENSE"];
 
 fs.writeFileSync(
   path.join(stageDir, "package.json"),
