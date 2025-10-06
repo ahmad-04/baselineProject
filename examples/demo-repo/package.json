@@ -15,7 +15,10 @@
     "lint": "eslint \"src/**/*.{ts,tsx,js,jsx}\""
   },
   "devDependencies": {
-    "eslint": "^9.9.0",
-    "@typescript-eslint/parser": "^8.0.0"
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.9.0"
+  },
+  "dependencies": {
+    "@whoisahmad/baseline-tools-cli": "^0.0.1"
   }
 }

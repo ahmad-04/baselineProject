@@ -1,14 +1,16 @@
 # Releasing
 
-This repo uses Changesets to manage versioning and publishing for npm packages, and a separate workflow to package the VS Code extension.
+This repo uses Changesets to manage versioning and publishing for npm packages, and separate npm scripts to manage the VS Code extension.
 
 ## Prerequisites
 
 - Node.js >= 18.18
 - npm registry auth: set `NPM_TOKEN` secret in the GitHub repo for automated publishes
-- Optional: VS Code Marketplace publisher set up if you plan to publish there
+- VS Code Marketplace access: set `VSCE_PAT` secret for extension publishing
 
-## Versioning and Publishing (Changesets)
+## CLI Package (npm)
+
+The CLI package (`@whoisahmad/baseline-tools-cli`) is published to npm using Changesets:
 
 1. Create or update changesets locally:
 

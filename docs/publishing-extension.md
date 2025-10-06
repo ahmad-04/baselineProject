@@ -16,6 +16,29 @@ This document outlines the process for publishing the Baseline Guardrails VS Cod
 
 ## Publishing Methods
 
+### Method 1: Using npm Scripts (Recommended)
+
+The project includes convenient npm scripts for packaging and publishing:
+
+```bash
+# Package the extension (creates .vsix file)
+npm run vsce:package
+
+# Publish with automatic patch version bump
+npm run vsce:publish:patch
+
+# Publish with automatic minor version bump
+npm run vsce:publish:minor
+
+# Publish with automatic major version bump
+npm run vsce:publish:major
+
+# Publish current version (no version bump)
+npm run vsce:publish
+```
+
+### Method 2: Automatic Publishing via GitHub Actions
+
 ### Method 1: Automatic Publishing via GitHub Actions
 
 #### Option A: Using Version Tags

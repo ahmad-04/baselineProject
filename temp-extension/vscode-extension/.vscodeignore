@@ -1,7 +1,0 @@
-node_modules
-**/*.map
-src/**
-.gitignore
-.vscode/**
-.vscode-test/**
-**/*.ts

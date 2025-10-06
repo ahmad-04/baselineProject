@@ -1,4 +1,29 @@
-# Screenshots
+# Documentation Images
+
+This directory contains screenshots and diagrams used in the project documentation.
+
+## Files
+
+- `code-scanning.svg` - GitHub Code Scanning integration diagram
+- `html-report.svg` - HTML report structure visualization
+- `vscode-quickfix.svg` - VS Code quick fix interface
+- `vscode-status.svg` - VS Code extension status bar
+
+## Usage
+
+These images are referenced in:
+- Main project README
+- Package READMEs
+- VS Code extension documentation
+- GitHub marketplace listing
+
+## Adding Images
+
+When adding new images:
+1. Use descriptive filenames
+2. Prefer SVG for diagrams and icons
+3. Use PNG for screenshots
+4. Update this README with new file descriptions
 
 Place project screenshots here to keep README clean:
 
