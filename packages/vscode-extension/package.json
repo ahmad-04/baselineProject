@@ -93,6 +93,11 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Experimental: Use the Baseline LSP server (stdio) instead of built-in analysis when available. Falls back automatically if the server is not found."
+        },
+        "baseline.showSafe": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Show findings that are considered 'safe to adopt' (normally hidden). Useful for full adoption inventory reports." 
         }
       }
     }

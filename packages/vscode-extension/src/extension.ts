@@ -165,12 +165,14 @@ function getVsCodeSettings() {
       scanOnChange: cfg.get<boolean>("scanOnChange"),
       targets: cfg.get<string[]>("targets"),
       unsupportedThreshold: cfg.get<number>("unsupportedThreshold"),
+      showSafe: cfg.get<boolean>("showSafe"),
     } as const;
   } catch {
     return {
       scanOnChange: undefined,
       targets: undefined,
       unsupportedThreshold: undefined,
+      showSafe: undefined,
     } as const;
   }
 }
@@ -289,7 +291,7 @@ function computeDiagnostics(doc: vscode.TextDocument) {
     const diags: vscode.Diagnostic[] = [];
     for (const f of findings) {
       if (cfg?.features && cfg.features[f.featureId] === false) continue;
-      if (f.baseline === "yes") continue;
+      const showSafe = !!vs.showSafe;
       if ((f as any).advice === "guarded") continue;
       const threshold =
         typeof vs.unsupportedThreshold === "number" &&
@@ -308,7 +310,7 @@ function computeDiagnostics(doc: vscode.TextDocument) {
         return a || "needs-guard";
       })();
       // Do not show diagnostics for safe findings
-      if (effAdvice === "safe") continue;
+  if (effAdvice === "safe" && !showSafe) continue;
       const range = toRange(doc, f.line, f.column);
       const msgAdvice =
         effAdvice === "guarded"
@@ -396,7 +398,7 @@ async function computeDiagnosticsForPath(filePath: string) {
     const diags: vscode.Diagnostic[] = [];
     for (const f of findings) {
       if (cfg?.features && cfg.features[f.featureId] === false) continue;
-      if (f.baseline === "yes") continue;
+      const showSafe = !!vs.showSafe;
       if ((f as any).advice === "guarded") continue;
       const threshold =
         typeof vs.unsupportedThreshold === "number" &&
@@ -411,7 +413,7 @@ async function computeDiagnosticsForPath(filePath: string) {
         (f as any).unsupportedPercent <= threshold
           ? "safe"
           : a || "needs-guard";
-      if (effAdvice === "safe") continue;
+  if (effAdvice === "safe" && !showSafe) continue;
       const range = new vscode.Range(
         new vscode.Position(Math.max(0, f.line - 1), Math.max(0, f.column - 1)),
         new vscode.Position(Math.max(0, f.line - 1), Math.max(0, f.column))
