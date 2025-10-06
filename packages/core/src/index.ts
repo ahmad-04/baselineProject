@@ -285,7 +285,11 @@ function pushMatches(
         it.baseline === "yes" ? "safe" : guarded ? "guarded" : "needs-guard";
       const baselineFlag = isBaselineFeature(it.id);
       // Only upgrade to safe automatically when the feature is fully baseline (declared baseline 'yes').
-      if (baselineFlag === true && it.baseline === "yes" && advice !== "guarded") {
+      if (
+        baselineFlag === true &&
+        it.baseline === "yes" &&
+        advice !== "guarded"
+      ) {
         advice = "safe";
       }
       arr.push({
@@ -344,7 +348,11 @@ export function analyze(
                 ? "guarded"
                 : "needs-guard";
           const baselineFlag = isBaselineFeature(a.featureId);
-          if (baselineFlag === true && a.baseline === "yes" && advice !== "guarded") {
+          if (
+            baselineFlag === true &&
+            a.baseline === "yes" &&
+            advice !== "guarded"
+          ) {
             advice = "safe";
           }
           findings.push({
