@@ -58,5 +58,7 @@ if (fs.existsSync(nmSrc)) {
     console.error("[bundle-core] Failed to copy runtime dependencies", e);
   }
 } else {
-  log("No core node_modules found; analyzer may have missing dependencies in VSIX");
+  log(
+    "No core node_modules found; analyzer may have missing dependencies in VSIX"
+  );
 }
